@@ -21,8 +21,8 @@ function __zhm_update_mark {
 
 function __zhm_update_history {
   if [[ "$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
-    if (( ''${#ZHM_HISTORY} > ($ZHM_HISTORY_IDX * 7) )); then
-      local count=$(((''${#ZHM_HISTORY} - ZHM_HISTORY_IDX * 7) - 1))
+    if (( ${#ZHM_HISTORY} > ($ZHM_HISTORY_IDX * 7) )); then
+      local count=$(((${#ZHM_HISTORY} - ZHM_HISTORY_IDX * 7) - 1))
       for i in {0..$count}; do
         shift -p ZHM_HISTORY
       done
@@ -104,7 +104,7 @@ function zhm_goto_line_start {
 
 function zhm_goto_line_end {
   local prev_cursor=$CURSOR
-  CURSOR=$((''${#BUFFER} - 1))
+  CURSOR=$((${#BUFFER} - 1))
   if (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
     if (( ZHM_EXTENDING != 1 )); then
       ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
@@ -148,7 +148,7 @@ function zhm_history_prev {
   HISTNO=$((HISTNO - 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ''${#BUFFER} ? ZHM_SELECTION_RIGHT : ''${#BUFFER}))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
@@ -160,14 +160,13 @@ function zhm_history_next {
   HISTNO=$((HISTNO + 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ''${#BUFFER} ? ZHM_SELECTION_RIGHT : ''${#BUFFER}))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
 function zhm_move_next_word_start {
-  # word another-word some@123host && more sauce
   local prev_cursor=$CURSOR
-  local substring="''${BUFFER:$CURSOR}"
+  local substring="${BUFFER:$CURSOR}"
   if [[ $substring =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]; then
     local skip=0
     CURSOR=$((CURSOR + MEND - 1))
@@ -175,7 +174,7 @@ function zhm_move_next_word_start {
       skip=1
     fi
     if (( MEND <= 1)); then
-      if [[ "''${substring:1}" =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]
+      if [[ "${substring:1}" =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]
       then
         CURSOR=$((CURSOR + MEND))
         skip=1
@@ -210,18 +209,18 @@ function zhm_move_next_word_start {
 function zhm_move_prev_word_start {
   local prev_cursor=$CURSOR
   local rev_buffer="$(echo "$BUFFER" | rev)"
-  local substring="''${rev_buffer:$((-CURSOR - 1))}"
+  local substring="${rev_buffer:$((-CURSOR - 1))}"
   if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
     local skip=0
-    if (( CURSOR == ''${#BUFFER} )); then
-      CURSOR=$((CURSOR - 1))
+    if (( CURSOR == ${#BUFFER} )); then
+     CURSOR=$((CURSOR - 1))
     fi
     CURSOR=$((CURSOR - MEND + 1))
     if (( MBEGIN > 1)); then
       skip=1
     fi
     if (( MEND <= 1)); then
-      if [[ "''${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
+      if [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
       then
         CURSOR=$((CURSOR - MEND))
         skip=1
@@ -253,7 +252,7 @@ function zhm_move_prev_word_start {
 
 function zhm_move_next_word_end {
   local prev_cursor=$CURSOR
-  local substring="''${BUFFER:$CURSOR}"
+  local substring="${BUFFER:$CURSOR}"
   if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
     local skip=0
     CURSOR=$((CURSOR + MEND - 1))
@@ -261,7 +260,7 @@ function zhm_move_next_word_end {
       skip=1
     fi
     if (( MEND <= 1)); then
-      if [[ "''${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
+      if [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
       then
         CURSOR=$((CURSOR + MEND))
         skip=1
@@ -318,7 +317,7 @@ function zhm_append {
 }
 
 function zhm_insert_at_line_end {
-  CURSOR=''${#BUFFER}
+  CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$CURSOR
   zhm_insert
@@ -338,7 +337,7 @@ function zhm_normal {
         CURSOR=$((CURSOR - 1))
       else
         ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
-        local buffer_len=''${#BUFFER}
+        local buffer_len=${#BUFFER}
         ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
       fi
     fi
@@ -380,7 +379,7 @@ function zhm_self_insert {
 
 function zhm_insert_newline {
   local prev_cursor=$CURSOR
-  BUFFER="''${BUFFER}
+  BUFFER="${BUFFER}
 "
   CURSOR=$((CURSOR + 2))
   if (( prev_cursor == ZHM_SELECTION_LEFT )); then
@@ -413,9 +412,9 @@ function zhm_delete {
   local prev_left=$ZHM_SELECTION_LEFT
   local prev_right=$ZHM_SELECTION_RIGHT
 
-  BUFFER="''${BUFFER:0:$ZHM_SELECTION_LEFT}''${BUFFER:$ZHM_SELECTION_RIGHT}"
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=''${#BUFFER}
+  local buffer_len=${#BUFFER}
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
   CURSOR=$ZHM_SELECTION_LEFT
 
@@ -434,9 +433,9 @@ function zhm_change {
   ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
   ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
 
-  BUFFER="''${BUFFER:0:$ZHM_SELECTION_LEFT}''${BUFFER:$ZHM_SELECTION_RIGHT}"
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=''${#BUFFER}
+  local buffer_len=${#BUFFER}
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
   CURSOR=$ZHM_SELECTION_LEFT
   ZHM_EXTENDING=0
@@ -461,7 +460,7 @@ function zhm_undo {
 }
 
 function zhm_redo {
-  if (((ZHM_HISTORY_IDX * 7) < ''${#ZHM_HISTORY})); then
+  if (((ZHM_HISTORY_IDX * 7) < ${#ZHM_HISTORY})); then
     ZHM_HISTORY_IDX=$((ZHM_HISTORY_IDX + 1))
     BUFFER="$ZHM_HISTORY[$(($ZHM_HISTORY_IDX * 7 - 6))]"
     CURSOR="$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7 - 2))]"
@@ -492,9 +491,9 @@ function zhm_clipboard_paste_after {
   local prev_right=$ZHM_SELECTION_RIGHT
 
   local content="$(xclip -o -sel clip)"
-  BUFFER="''${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content''${BUFFER:$ZHM_SELECTION_RIGHT}"
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ''${#content}))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
   if (( (prev_left + 1) == prev_right )); then
     CURSOR=$((ZHM_SELECTION_RIGHT - 1))
   elif (( prev_cursor == prev_left )); then
@@ -513,8 +512,8 @@ function zhm_clipboard_paste_before {
   local prev_right=$ZHM_SELECTION_RIGHT
 
   local content="$(xclip -o -sel clip)"
-  BUFFER="''${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content''${BUFFER:$ZHM_SELECTION_LEFT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ''${#content}))
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content}))
   if (( (prev_left + 1) == prev_right )); then
     CURSOR=$((ZHM_SELECTION_LEFT))
   elif (( prev_cursor == prev_left )); then
