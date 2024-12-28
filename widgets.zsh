@@ -2,8 +2,15 @@ export ZHM_MODE=insert
 ZHM_EXTENDING=0
 ZHM_SELECTION_LEFT=0
 ZHM_SELECTION_RIGHT=0
-ZHM_HISTORY=("" 0 0 0 0 0 0)
-ZHM_HISTORY_IDX=1
+# - buffer
+# - cursor position 1
+# - selection position left 1
+# - selection position right 1
+# - cursor position 2
+# - selection position left 2
+# - selection position right 2
+ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
+ZHM_EDITOR_HISTORY_IDX=1
 ZHM_BEFORE_INSERT_CURSOR=0
 ZHM_BEFORE_INSERT_SELECTION_LEFT=0
 ZHM_BEFORE_INSERT_SELECTION_RIGHT=0
@@ -19,25 +26,23 @@ function __zhm_update_mark {
   fi
 }
 
-function __zhm_update_history {
-  if [[ "$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
-    if (( ${#ZHM_HISTORY} > ($ZHM_HISTORY_IDX * 7) )); then
-      local count=$(((${#ZHM_HISTORY} - ZHM_HISTORY_IDX * 7) - 1))
+function __zhm_update_editor_history {
+  if [[ "$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
+    if (( ${#ZHM_EDITOR_HISTORY} > ($ZHM_EDITOR_HISTORY_IDX * 7) )); then
+      local count=$(((${#ZHM_EDITOR_HISTORY} - ZHM_EDITOR_HISTORY_IDX * 7) - 1))
       for i in {0..$count}; do
-        shift -p ZHM_HISTORY
+        shift -p ZHM_EDITOR_HISTORY
       done
     fi
 
-    ZHM_HISTORY+=("$1")
-    ZHM_HISTORY+=($2)
-    ZHM_HISTORY+=($3)
-    ZHM_HISTORY+=($4)
-    ZHM_HISTORY+=($5)
-    ZHM_HISTORY+=($6)
-    ZHM_HISTORY+=($7)
-    ZHM_HISTORY_IDX=$((ZHM_HISTORY_IDX + 1))
-
-    ZHM_IN_CMD_HISTORY=0
+    ZHM_EDITOR_HISTORY+=("$1")
+    ZHM_EDITOR_HISTORY+=($2)
+    ZHM_EDITOR_HISTORY+=($3)
+    ZHM_EDITOR_HISTORY+=($4)
+    ZHM_EDITOR_HISTORY+=($5)
+    ZHM_EDITOR_HISTORY+=($6)
+    ZHM_EDITOR_HISTORY+=($7)
+    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
   fi
 }
 
@@ -299,7 +304,7 @@ function zhm_insert {
   bindkey -A hins main
   export ZHM_MODE=insert
   CURSOR=$ZHM_SELECTION_LEFT
-  echo -ne "$ZHM_CURSOR_INSERT"
+  printf "$ZHM_CURSOR_INSERT"
   __zhm_update_mark
 }
 
@@ -310,7 +315,7 @@ function zhm_append {
   bindkey -A hins main
   export ZHM_MODE=insert
   CURSOR=$ZHM_SELECTION_RIGHT
-  echo -ne "\e[0m$ZHM_CURSOR_INSERT"
+  printf "\e[0m$ZHM_CURSOR_INSERT"
   CURSOR=$((CURSOR - 1))
   __zhm_update_mark
   CURSOR=$((CURSOR + 1))
@@ -342,12 +347,12 @@ function zhm_normal {
       fi
     fi
 
-    __zhm_update_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+    __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
   bindkey -A hnor main
   export ZHM_MODE=normal
   ZHM_EXTENDING=0
-  echo -ne "\e[0m$ZHM_CURSOR_NORMAL"
+  printf "\e[0m$ZHM_CURSOR_NORMAL"
   __zhm_update_mark
 }
 
@@ -356,10 +361,10 @@ function zhm_select {
   export ZHM_MODE=normal
   if ((ZHM_EXTENDING == 1)); then
     ZHM_EXTENDING=0
-    echo -ne "\e[0m$ZHM_CURSOR_NORMAL"
+    printf "\e[0m$ZHM_CURSOR_NORMAL"
   else
     ZHM_EXTENDING=1
-    echo -ne "\e[0m$ZHM_CURSOR_SELECT"
+    printf "\e[0m$ZHM_CURSOR_SELECT"
   fi
   __zhm_update_mark
 }
@@ -420,7 +425,7 @@ function zhm_delete {
 
   ZHM_EXTENDING=0
 
-  __zhm_update_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
 
@@ -443,29 +448,33 @@ function zhm_change {
   bindkey -A hins main
   export ZHM_MODE=insert
   CURSOR=$ZHM_SELECTION_LEFT
-  echo -ne "$ZHM_CURSOR_INSERT"
+  printf "$ZHM_CURSOR_INSERT"
 
   __zhm_update_mark
 }
 
+function zhm_replace {
+  
+}
+
 function zhm_undo {
-  if ((ZHM_HISTORY_IDX > 1)); then
-    ZHM_HISTORY_IDX=$((ZHM_HISTORY_IDX - 1))
-    BUFFER="$ZHM_HISTORY[$(($ZHM_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_HISTORY[$(((ZHM_HISTORY_IDX + 1) * 7 - 5))]"
-    ZHM_SELECTION_LEFT="$ZHM_HISTORY[$(((ZHM_HISTORY_IDX + 1) * 7 - 4))]"
-    ZHM_SELECTION_RIGHT="$ZHM_HISTORY[$(((ZHM_HISTORY_IDX + 1) * 7 - 3))]"
+  if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
+    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
+    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
+    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
+    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
     __zhm_update_mark
   fi
 }
 
 function zhm_redo {
-  if (((ZHM_HISTORY_IDX * 7) < ${#ZHM_HISTORY})); then
-    ZHM_HISTORY_IDX=$((ZHM_HISTORY_IDX + 1))
-    BUFFER="$ZHM_HISTORY[$(($ZHM_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7 - 2))]"
-    ZHM_SELECTION_LEFT="$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7 - 1))]"
-    ZHM_SELECTION_RIGHT="$ZHM_HISTORY[$((ZHM_HISTORY_IDX * 7))]"
+  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#ZHM_EDITOR_HISTORY})); then
+    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
+    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
+    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
+    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
     __zhm_update_mark
   fi
 }
@@ -477,8 +486,8 @@ function zhm_accept {
   zle accept-line
   MARK=
   REGION_ACTIVE=0
-  ZHM_HISTORY=("" 0 0 0 0 0 0)
-  ZHM_HISTORY_IDX=1
+  ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
+  ZHM_EDITOR_HISTORY_IDX=1
 }
 
 function zhm_clipboard_yank {
@@ -502,7 +511,7 @@ function zhm_clipboard_paste_after {
     CURSOR=$((ZHM_SELECTION_RIGHT - 1))
   fi
 
-  __zhm_update_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
 
@@ -522,7 +531,7 @@ function zhm_clipboard_paste_before {
     CURSOR=$((ZHM_SELECTION_RIGHT - 1))
   fi
 
-  __zhm_update_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
 
