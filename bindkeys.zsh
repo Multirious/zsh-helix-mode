@@ -10,6 +10,9 @@ bindkey -M hnor k zhm_move_up
 bindkey -M hnor gh zhm_goto_line_start
 bindkey -M hnor gl zhm_goto_line_end
 bindkey -M hnor gs zhm_goto_line_first_nonwhitespace
+bindkey -M hnor % zhm_select_all
+bindkey -M hnor \; zhm_collapse_selection
+bindkey -M hnor x zhm_extend_line_below
 bindkey -M hnor ^N zhm_history_next
 bindkey -M hnor ^P zhm_history_prev
 bindkey -M hnor i zhm_insert
@@ -21,6 +24,10 @@ bindkey -M hnor b zhm_move_prev_word_start
 bindkey -M hnor e zhm_move_next_word_end
 bindkey -M hnor v zhm_select
 bindkey -M hnor d zhm_delete
+# -R doesn't seem to support prefix in-string
+for char in {" ".."~"}; do
+  bindkey -M hnor "r$char" zhm_replace
+done
 bindkey -M hnor c zhm_change
 bindkey -M hnor u zhm_undo
 bindkey -M hnor U zhm_redo

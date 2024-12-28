@@ -145,11 +145,29 @@ function zhm_goto_line_first_nonwhitespace {
   __zhm_update_mark
 }
 
+function zhm_select_all {
+  local buffer_len=${#BUFFER}
+  CURSOR=$buffer_len
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  __zhm_update_mark
+}
+
+function zhm_collapse_selection {
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  __zhm_update_mark
+}
+
+# currently just select the whole buffer at the momment
+function zhm_extend_line_below {
+  zhm_select_all
+}
+
 function zhm_history_prev {
   ZHM_EXTENDING=0
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
-  local prev_histno=$HISTNO
   HISTNO=$((HISTNO - 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
@@ -161,7 +179,6 @@ function zhm_history_next {
   ZHM_EXTENDING=0
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
-  local prev_histno=$HISTNO
   HISTNO=$((HISTNO + 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
@@ -304,6 +321,9 @@ function zhm_insert {
   bindkey -A hins main
   export ZHM_MODE=insert
   CURSOR=$ZHM_SELECTION_LEFT
+  if ((ZHM_SELECTION_LEFT + 1 == ZHM_SELECTION_RIGHT)); then
+    ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
+  fi
   printf "$ZHM_CURSOR_INSERT"
   __zhm_update_mark
 }
@@ -397,15 +417,17 @@ function zhm_insert_newline {
 function zhm_delete_char_backward {
   zle backward-delete-char
 
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - 1))
-    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
-    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
-    ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT > 0 ? ZHM_SELECTION_RIGHT : 0))
-  else
-    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
-    if (( ZHM_SELECTION_RIGHT < ZHM_SELECTION_LEFT )); then
-      ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+  if ((CURSOR > 0)); then
+    if (( prev_cursor == ZHM_SELECTION_LEFT )); then
+      ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - 1))
+      ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
+      ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
+      ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT > 0 ? ZHM_SELECTION_RIGHT : 0))
+    else
+      ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
+      if (( ZHM_SELECTION_RIGHT < ZHM_SELECTION_LEFT )); then
+        ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+      fi
     fi
   fi
 
@@ -454,7 +476,13 @@ function zhm_change {
 }
 
 function zhm_replace {
-  
+  local char="${KEYS:1}"
+  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT))
+  local replace_with=$(printf "$char"'%.0s' {1..$count})
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
+  ZHM_EXTENDING=0
+  printf "$ZHM_CURSOR_NORMAL"
+  __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
 }
 
 function zhm_undo {
@@ -549,6 +577,9 @@ zle -N zhm_move_down
 zle -N zhm_goto_line_start
 zle -N zhm_goto_line_end
 zle -N zhm_goto_line_first_nonwhitespace
+zle -N zhm_select_all
+zle -N zhm_collapse_selection
+zle -N zhm_extend_line_below
 zle -N zhm_history_next
 zle -N zhm_history_prev
 zle -N zhm_move_next_word_start
@@ -562,6 +593,7 @@ zle -N zhm_normal
 zle -N zhm_select
 zle -N zhm_delete_char_backward
 zle -N zhm_delete
+zle -N zhm_replace
 zle -N zhm_self_insert
 zle -N zhm_insert_newline
 zle -N zhm_redo

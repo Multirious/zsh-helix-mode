@@ -30,6 +30,11 @@ function zhm_precmd {
 function zhm_preexec {
   echo -ne "$ZHM_CURSOR_NORMAL"
   REGION_ACTIVE=0
+  # Forcing zle to append current command as the latest command
+  # If this isn't used, zle would just append the line after current history index
+  # (not the latest command) which is quite unintuitive
+  # Not sure if there are better way instead of this
+  HISTNO=999999
 }
 
 precmd_functions+=(zhm_precmd)
