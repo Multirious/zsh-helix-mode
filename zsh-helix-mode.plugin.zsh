@@ -7,7 +7,7 @@ ZHM_CURSOR_NORMAL='\e[2 q\e]12;#B4BEFE\a'
 ZHM_CURSOR_SELECT='\e[2 q\e]12;#F2CDCD\a'
 ZHM_CURSOR_INSERT='\e[5 q\e]12;white\a'
 
-# This config is provided by zle
+# This config is provided by zle. The plugin uses this as the style for selection.
 zle_highlight=(region:fg=white,bg=#45475A)
 
 # Clipboard commands
