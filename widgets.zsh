@@ -90,102 +90,6 @@ function zhm_move_down {
   zle down-line
 }
 
-function zhm_goto_line_start {
-  local prev_cursor=$CURSOR
-  CURSOR=0
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-    fi
-    ZHM_SELECTION_LEFT=$CURSOR
-  elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_LEFT=$CURSOR
-    fi
-  fi
-  __zhm_update_mark
-}
-
-function zhm_goto_line_end {
-  local prev_cursor=$CURSOR
-  CURSOR=$((${#BUFFER} - 1))
-  if (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
-    fi
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-  elif (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$CURSOR
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-    fi
-  fi
-  __zhm_update_mark
-}
-
-function zhm_goto_line_first_nonwhitespace {
-  local prev_cursor=$CURSOR
-  if [[ $BUFFER =~ "\s*" ]]; then
-    CURSOR=$MEND
-  else
-    CURSOR=0
-  fi
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-    fi
-    ZHM_SELECTION_LEFT=$CURSOR
-  elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-    if (( ZHM_EXTENDING != 1 )); then
-      ZHM_SELECTION_LEFT=$CURSOR
-    fi
-  fi
-  __zhm_update_mark
-}
-
-function zhm_select_all {
-  local buffer_len=${#BUFFER}
-  CURSOR=$buffer_len
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_mark
-}
-
-function zhm_collapse_selection {
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_mark
-}
-
-# currently just select the whole buffer at the momment
-function zhm_extend_line_below {
-  zhm_select_all
-}
-
-function zhm_history_prev {
-  ZHM_EXTENDING=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
-  HISTNO=$((HISTNO - 1))
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
-  __zhm_update_mark
-}
-
-function zhm_history_next {
-  ZHM_EXTENDING=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
-  HISTNO=$((HISTNO + 1))
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
-  __zhm_update_mark
-}
-
 function zhm_move_next_word_start {
   local prev_cursor=$CURSOR
   local substring="${BUFFER:$CURSOR}"
@@ -314,45 +218,78 @@ function zhm_move_next_word_end {
   __zhm_update_mark
 }
 
-function zhm_insert {
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
-  bindkey -A hins main
-  export ZHM_MODE=insert
-  CURSOR=$ZHM_SELECTION_LEFT
-  if ((ZHM_SELECTION_LEFT + 1 == ZHM_SELECTION_RIGHT)); then
-    ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-  fi
-  printf "\e[0m$ZHM_CURSOR_INSERT"
-  __zhm_update_mark
-}
-
-function zhm_append {
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
-  bindkey -A hins main
-  export ZHM_MODE=insert
-  CURSOR=$ZHM_SELECTION_RIGHT
-  printf "\e[0m$ZHM_CURSOR_INSERT"
-  CURSOR=$((CURSOR - 1))
-  __zhm_update_mark
-  CURSOR=$((CURSOR + 1))
-}
-
-function zhm_insert_at_line_end {
-  CURSOR=${#BUFFER}
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$CURSOR
-  zhm_insert
-}
-
-function zhm_insert_at_line_start {
+function zhm_goto_line_start {
+  local prev_cursor=$CURSOR
   CURSOR=0
+  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
+    fi
+    ZHM_SELECTION_LEFT=$CURSOR
+  elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
+    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_LEFT=$CURSOR
+    fi
+  fi
+  __zhm_update_mark
+}
+
+function zhm_goto_line_end {
+  local prev_cursor=$CURSOR
+  CURSOR=$((${#BUFFER} - 1))
+  if (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+    fi
+    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+  elif (( prev_cursor == ZHM_SELECTION_LEFT )); then
+    ZHM_SELECTION_LEFT=$CURSOR
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+    fi
+  fi
+  __zhm_update_mark
+}
+
+function zhm_goto_line_first_nonwhitespace {
+  local prev_cursor=$CURSOR
+  if [[ $BUFFER =~ "\s*" ]]; then
+    CURSOR=$MEND
+  else
+    CURSOR=0
+  fi
+  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
+    fi
+    ZHM_SELECTION_LEFT=$CURSOR
+  elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
+    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+    if (( ZHM_EXTENDING != 1 )); then
+      ZHM_SELECTION_LEFT=$CURSOR
+    fi
+  fi
+  __zhm_update_mark
+}
+
+function zhm_select_all {
+  local buffer_len=${#BUFFER}
+  CURSOR=$buffer_len
   ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
-  zhm_insert
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  __zhm_update_mark
+}
+
+function zhm_collapse_selection {
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  __zhm_update_mark
+}
+
+# currently just select the whole buffer at the momment
+function zhm_extend_line_below {
+  zhm_select_all
 }
 
 function zhm_normal {
@@ -386,6 +323,165 @@ function zhm_select {
     ZHM_EXTENDING=1
     printf "\e[0m$ZHM_CURSOR_SELECT"
   fi
+  __zhm_update_mark
+}
+
+function zhm_insert {
+  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
+  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
+  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
+  bindkey -A hins main
+  export ZHM_MODE=insert
+  CURSOR=$ZHM_SELECTION_LEFT
+  if ((ZHM_SELECTION_LEFT + 1 == ZHM_SELECTION_RIGHT)); then
+    ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
+  fi
+  printf "\e[0m$ZHM_CURSOR_INSERT"
+  __zhm_update_mark
+}
+
+function zhm_insert_at_line_end {
+  CURSOR=${#BUFFER}
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$CURSOR
+  zhm_insert
+}
+
+function zhm_insert_at_line_start {
+  CURSOR=0
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=0
+  zhm_insert
+}
+
+function zhm_append {
+  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
+  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
+  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
+  bindkey -A hins main
+  export ZHM_MODE=insert
+  CURSOR=$ZHM_SELECTION_RIGHT
+  printf "\e[0m$ZHM_CURSOR_INSERT"
+  CURSOR=$((CURSOR - 1))
+  __zhm_update_mark
+  CURSOR=$((CURSOR + 1))
+}
+
+function zhm_change {
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
+  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
+  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
+
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
+  local buffer_len=${#BUFFER}
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
+  CURSOR=$ZHM_SELECTION_LEFT
+  ZHM_EXTENDING=0
+
+  bindkey -A hins main
+  export ZHM_MODE=insert
+  CURSOR=$ZHM_SELECTION_LEFT
+  printf "\e[0m$ZHM_CURSOR_INSERT"
+
+  __zhm_update_mark
+}
+
+function zhm_replace {
+  local char="${KEYS:1}"
+  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT))
+  local replace_with=$(printf "$char"'%.0s' {1..$count})
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
+  ZHM_EXTENDING=0
+  printf "\e[0m$ZHM_CURSOR_NORMAL"
+  __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+}
+
+function zhm_delete {
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
+  local buffer_len=${#BUFFER}
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
+  CURSOR=$ZHM_SELECTION_LEFT
+
+  ZHM_EXTENDING=0
+
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_mark
+}
+
+function zhm_undo {
+  if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
+    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
+    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
+    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
+    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
+    __zhm_update_mark
+  fi
+}
+
+function zhm_redo {
+  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#ZHM_EDITOR_HISTORY})); then
+    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
+    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
+    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
+    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
+    __zhm_update_mark
+  fi
+}
+
+function zhm_clipboard_yank {
+  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT))]" | xclip -sel clip
+}
+
+function zhm_clipboard_paste_after {
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  local content="$(xclip -o -sel clip)"
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content${BUFFER:$ZHM_SELECTION_RIGHT}"
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
+  if (( (prev_left + 1) == prev_right )); then
+    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  elif (( prev_cursor == prev_left )); then
+    CURSOR=$ZHM_SELECTION_LEFT
+  else
+    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  fi
+
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_mark
+}
+
+function zhm_clipboard_paste_before {
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  local content="$(xclip -o -sel clip)"
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content}))
+  if (( (prev_left + 1) == prev_right )); then
+    CURSOR=$((ZHM_SELECTION_LEFT))
+  elif (( prev_cursor == prev_left )); then
+    CURSOR=$ZHM_SELECTION_LEFT
+  else
+    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  fi
+
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
 
@@ -434,79 +530,6 @@ function zhm_delete_char_backward {
   __zhm_update_mark
 }
 
-function zhm_delete {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
-
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=${#BUFFER}
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
-  CURSOR=$ZHM_SELECTION_LEFT
-
-  ZHM_EXTENDING=0
-
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
-}
-
-function zhm_change {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
-
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
-
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=${#BUFFER}
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
-  CURSOR=$ZHM_SELECTION_LEFT
-  ZHM_EXTENDING=0
-
-  bindkey -A hins main
-  export ZHM_MODE=insert
-  CURSOR=$ZHM_SELECTION_LEFT
-  printf "\e[0m$ZHM_CURSOR_INSERT"
-
-  __zhm_update_mark
-}
-
-function zhm_replace {
-  local char="${KEYS:1}"
-  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT))
-  local replace_with=$(printf "$char"'%.0s' {1..$count})
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_EXTENDING=0
-  printf "\e[0m$ZHM_CURSOR_NORMAL"
-  __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-}
-
-function zhm_undo {
-  if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
-    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
-    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
-    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
-    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
-    __zhm_update_mark
-  fi
-}
-
-function zhm_redo {
-  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#ZHM_EDITOR_HISTORY})); then
-    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
-    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
-    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
-    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
-    __zhm_update_mark
-  fi
-}
-
 function zhm_accept {
   ZHM_EXTENDING=0
   ZHM_SELECTION_LEFT=0
@@ -518,48 +541,25 @@ function zhm_accept {
   ZHM_EDITOR_HISTORY_IDX=1
 }
 
-function zhm_clipboard_yank {
-  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT))]" | xclip -sel clip
-}
-
-function zhm_clipboard_paste_after {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
-
-  local content="$(xclip -o -sel clip)"
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
-  if (( (prev_left + 1) == prev_right )); then
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
-  elif (( prev_cursor == prev_left )); then
-    CURSOR=$ZHM_SELECTION_LEFT
-  else
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
-  fi
-
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+function zhm_history_prev {
+  ZHM_EXTENDING=0
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=0
+  HISTNO=$((HISTNO - 1))
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
-function zhm_clipboard_paste_before {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
-
-  local content="$(xclip -o -sel clip)"
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content}))
-  if (( (prev_left + 1) == prev_right )); then
-    CURSOR=$((ZHM_SELECTION_LEFT))
-  elif (( prev_cursor == prev_left )); then
-    CURSOR=$ZHM_SELECTION_LEFT
-  else
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
-  fi
-
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+function zhm_history_next {
+  ZHM_EXTENDING=0
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=0
+  HISTNO=$((HISTNO + 1))
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
@@ -574,33 +574,39 @@ zle -N zhm_move_left
 zle -N zhm_move_right
 zle -N zhm_move_up
 zle -N zhm_move_down
-zle -N zhm_goto_line_start
-zle -N zhm_goto_line_end
-zle -N zhm_goto_line_first_nonwhitespace
-zle -N zhm_select_all
-zle -N zhm_collapse_selection
-zle -N zhm_extend_line_below
-zle -N zhm_history_next
-zle -N zhm_history_prev
+
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
 zle -N zhm_move_next_word_end
+zle -N zhm_goto_line_start
+zle -N zhm_goto_line_end
+zle -N zhm_goto_line_first_nonwhitespace
+
+zle -N zhm_select_all
+zle -N zhm_collapse_selection
+zle -N zhm_extend_line_below
+
+zle -N zhm_normal
+zle -N zhm_select
 zle -N zhm_insert
 zle -N zhm_insert_at_line_end
 zle -N zhm_insert_at_line_start
 zle -N zhm_append
-zle -N zhm_normal
-zle -N zhm_select
-zle -N zhm_delete_char_backward
-zle -N zhm_delete
-zle -N zhm_replace
-zle -N zhm_self_insert
-zle -N zhm_insert_newline
-zle -N zhm_redo
-zle -N zhm_undo
-zle -N zhm_accept
 zle -N zhm_change
+zle -N zhm_replace
+zle -N zhm_delete
+zle -N zhm_undo
+zle -N zhm_redo
+
 zle -N zhm_clipboard_yank
 zle -N zhm_clipboard_paste_after
 zle -N zhm_clipboard_paste_before
+
+zle -N zhm_self_insert
+zle -N zhm_insert_newline
+zle -N zhm_delete_char_backward
+zle -N zhm_accept
+
+zle -N zhm_history_next
+zle -N zhm_history_prev
 zle -N zhm_expand_or_complete
