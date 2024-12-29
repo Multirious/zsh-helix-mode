@@ -49,12 +49,12 @@ function __zhm_update_editor_history {
 function zhm_move_right {
   local prev_cursor=$CURSOR
   CURSOR=$((CURSOR + 1))
-  if (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
+  if (( (prev_cursor + 1) >= ZHM_SELECTION_RIGHT )); then
     if (( ZHM_EXTENDING != 1 )); then
       ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
     fi
     ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-  elif (( prev_cursor == ZHM_SELECTION_LEFT )); then
+  elif (( prev_cursor <= ZHM_SELECTION_LEFT )); then
     ZHM_SELECTION_LEFT=$CURSOR
     if (( ZHM_EXTENDING != 1 )); then
       ZHM_SELECTION_RIGHT=$((CURSOR + 1))
@@ -67,12 +67,12 @@ function zhm_move_right {
 function zhm_move_left {
   local prev_cursor=$CURSOR
   CURSOR=$((CURSOR - 1))
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
+  if (( prev_cursor <= ZHM_SELECTION_LEFT )); then
     if (( ZHM_EXTENDING != 1 )); then
       ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
     fi
     ZHM_SELECTION_LEFT=$CURSOR
-  elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
+  elif (( (prev_cursor + 1) >= ZHM_SELECTION_RIGHT )); then
     ZHM_SELECTION_RIGHT=$((CURSOR + 1))
     if (( ZHM_EXTENDING != 1 )); then
       ZHM_SELECTION_LEFT=$CURSOR
