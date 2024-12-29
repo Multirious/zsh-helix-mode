@@ -500,6 +500,7 @@ function zhm_self_insert {
 
 function zhm_insert_newline {
   local prev_cursor=$CURSOR
+  # newline lol
   BUFFER="${BUFFER}
 "
   CURSOR=$((CURSOR + 2))
