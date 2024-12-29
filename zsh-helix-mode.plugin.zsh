@@ -1,3 +1,5 @@
+autoload -Uz add-zle-hook-widget
+
 0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
 0="${${(M)0:#/*}:-$PWD/$0}"
 
@@ -63,5 +65,27 @@ function zhm_preexec {
 
 precmd_functions+=(zhm_precmd)
 preexec_functions+=(zhm_preexec)
+
+function zhm_zle_line_pre_redraw {
+  # Keeps selection range in check
+
+  if (($CURSOR > $PREV_CURSOR)); then
+    ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  elif (($CURSOR < $PREV_CURSOR)); then
+    ZHM_SELECTION_LEFT=$CURSOR
+  fi
+
+  local buffer_len=${#BUFFER}
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
+  
+  local region_prev_active=$REGION_ACTIVE
+  __zhm_update_mark
+  REGION_ACTIVE=$region_prev_active
+
+  PREV_CURSOR=$CURSOR
+}
+
+add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
 
 printf "\e[0m$ZHM_CURSOR_INSERT"
