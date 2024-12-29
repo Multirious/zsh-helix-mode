@@ -324,7 +324,7 @@ function zhm_insert {
   if ((ZHM_SELECTION_LEFT + 1 == ZHM_SELECTION_RIGHT)); then
     ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   fi
-  printf "$ZHM_CURSOR_INSERT"
+  printf "\e[0m$ZHM_CURSOR_INSERT"
   __zhm_update_mark
 }
 
@@ -470,7 +470,7 @@ function zhm_change {
   bindkey -A hins main
   export ZHM_MODE=insert
   CURSOR=$ZHM_SELECTION_LEFT
-  printf "$ZHM_CURSOR_INSERT"
+  printf "\e[0m$ZHM_CURSOR_INSERT"
 
   __zhm_update_mark
 }
@@ -481,7 +481,7 @@ function zhm_replace {
   local replace_with=$(printf "$char"'%.0s' {1..$count})
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_EXTENDING=0
-  printf "$ZHM_CURSOR_NORMAL"
+  printf "\e[0m$ZHM_CURSOR_NORMAL"
   __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
 }
 

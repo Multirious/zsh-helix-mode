@@ -19,16 +19,16 @@ function zhm_precmd {
   ZHM_EDITOR_HISTORY_IDX=1
   case $ZHM_MODE in
     insert)
-      echo -ne "$ZHM_CURSOR_INSERT"
+      printf "\e[0m$ZHM_CURSOR_INSERT"
       ;;
     normal)
-      echo -ne "$ZHM_CURSOR_NORMAL"
+      printf "\e[0m$ZHM_CURSOR_NORMAL"
       ;;
   esac
 }
 
 function zhm_preexec {
-  echo -ne "$ZHM_CURSOR_NORMAL"
+  printf "\e[0m$ZHM_CURSOR_NORMAL"
   REGION_ACTIVE=0
   # Forcing zle to append current command as the latest command
   # If this isn't used, zle would just append the line after current history index
@@ -40,4 +40,4 @@ function zhm_preexec {
 precmd_functions+=(zhm_precmd)
 preexec_functions+=(zhm_preexec)
 
-echo -ne "$ZHM_CURSOR_INSERT"
+printf "\e[0m$ZHM_CURSOR_INSERT"
