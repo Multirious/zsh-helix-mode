@@ -1,18 +1,34 @@
 0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
 0="${${(M)0:#/*}:-$PWD/$0}"
 
-# Style configurations
+# Configurations
 # The plugin print these variables after mode changes
-ZHM_CURSOR_NORMAL='\e[2 q\e]12;#B4BEFE\a' # Pastel blue block cursor
-ZHM_CURSOR_SELECT='\e[2 q\e]12;#F2CDCD\a' # Pastel red block cursor
-ZHM_CURSOR_INSERT='\e[5 q\e]12;white\a' # White vertical blinking cursor
+
+# Pastel blue block cursor
+export ZHM_CURSOR_NORMAL="${ZHM_CURSOR_NORMAL:-\e[2 q\e]12;#B4BEFE\a}"
+
+# Pastel red block cursor
+export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[2 q\e]12;#F2CDCD\a}"
+
+# White vertical blinking cursor
+export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[5 q\e]12;white\a}"
 
 # This config is provided by zle. The plugin uses this as the style for selection.
-zle_highlight=(region:fg=white,bg=#45475A)
+if (( ! ${+zle_highlight} )); then
+  zle_highlight=(region:fg=white,bg=#45475A)
+fi
 
 # Clipboard commands
-ZHM_CLIPBOARD_PIPE_CONTENT_TO="xclip -sel clip"
-ZHM_CLIPBOARD_READ_CONTENT_FROM="xclip -o -sel clip"
+if [[ -n $DISPLAY ]]; then
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-xclip -sel clip}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-xclip -o -sel clip}"
+elif [[ -n $WAYLAND_DISPLAY ]]; then
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-wl-copy}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-wl-paste --no-newline}"
+else
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-}"
+fi
 
 source "${0:h}/widgets.zsh"
 source "${0:h}/bindkeys.zsh"
