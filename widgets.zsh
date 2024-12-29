@@ -441,7 +441,7 @@ function zhm_redo {
 }
 
 function zhm_clipboard_yank {
-  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT))]" | xclip -sel clip
+  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT))]" | $ZHM_CLIPBOARD_PIPE_CONTENT_TO
 }
 
 function zhm_clipboard_paste_after {
@@ -449,7 +449,7 @@ function zhm_clipboard_paste_after {
   local prev_left=$ZHM_SELECTION_LEFT
   local prev_right=$ZHM_SELECTION_RIGHT
 
-  local content="$(xclip -o -sel clip)"
+  local content="$($ZHM_CLIPBOARD_READ_CONTENT_FROM)"
   BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT))
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
@@ -470,7 +470,7 @@ function zhm_clipboard_paste_before {
   local prev_left=$ZHM_SELECTION_LEFT
   local prev_right=$ZHM_SELECTION_RIGHT
 
-  local content="$(xclip -o -sel clip)"
+  local content="$($ZHM_CLIPBOARD_READ_CONTENT_FROM)"
   BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content}))
   if (( (prev_left + 1) == prev_right )); then

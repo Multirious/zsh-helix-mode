@@ -1,10 +1,18 @@
 0="${ZERO:-${${0:#$ZSH_ARGZERO}:-${(%):-%N}}}"
 0="${${(M)0:#/*}:-$PWD/$0}"
 
+# Style configurations
+# The plugin print these variables after mode changes
 ZHM_CURSOR_NORMAL='\e[2 q\e]12;#B4BEFE\a'
 ZHM_CURSOR_SELECT='\e[2 q\e]12;#F2CDCD\a'
 ZHM_CURSOR_INSERT='\e[5 q\e]12;white\a'
+
+# This config is provided by zle
 zle_highlight=(region:fg=white,bg=#45475A)
+
+# Clipboard commands
+ZHM_CLIPBOARD_PIPE_CONTENT_TO="xclip -sel clip"
+ZHM_CLIPBOARD_READ_CONTENT_FROM="xclip -o -sel clip"
 
 source "${0:h}/widgets.zsh"
 source "${0:h}/bindkeys.zsh"
