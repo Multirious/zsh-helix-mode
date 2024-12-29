@@ -83,11 +83,11 @@ function zhm_move_left {
 }
 
 function zhm_move_up {
-  zle up-line
+  zle up-line-or-history
 }
 
 function zhm_move_down {
-  zle down-line
+  zle down-line-or-history
 }
 
 function zhm_move_next_word_start {
