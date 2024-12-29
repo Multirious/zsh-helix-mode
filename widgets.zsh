@@ -273,6 +273,53 @@ function zhm_goto_line_first_nonwhitespace {
   __zhm_update_mark
 }
 
+function zhm_surround_add {
+  local char="${KEYS:2}"
+  local left
+  local right
+  case $char in
+    "(" | ")")
+      left="("
+      right=")"
+      ;;
+    "[" | "]")
+      left="["
+      right="]"
+      ;;
+    "{" | "}")
+      left="{"
+      right="}"
+      ;;
+    "<" | ">")
+      left="<"
+      right=">"
+      ;;
+    *)
+      left="$char"
+      right="$char"
+      ;;
+  esac
+
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  local buffer_left="${BUFFER:0:$ZHM_SELECTION_LEFT}"
+  local buffer_right="${BUFFER:$ZHM_SELECTION_RIGHT}"
+  local buffer_inner="${BUFFER:$ZHM_SELECTION_LEFT:$(($ZHM_SELECTION_RIGHT - $ZHM_SELECTION_LEFT))}"
+
+  BUFFER="$buffer_left$left$buffer_inner$right$buffer_right"
+  ZHM_SELECTION_LEFT=${#buffer_left}
+  ZHM_SELECTION_RIGHT=$((${#buffer_left} + ${#left} + ${#buffer_inner} + ${#right}))
+  if (( (prev_cursor + 1) == prev_right )); then
+    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  else
+    CURSOR=$ZHM_SELECTION_LEFT
+  fi
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_mark
+}
+
 function zhm_select_all {
   local buffer_len=${#BUFFER}
   CURSOR=$buffer_len
@@ -582,6 +629,8 @@ zle -N zhm_move_next_word_end
 zle -N zhm_goto_line_start
 zle -N zhm_goto_line_end
 zle -N zhm_goto_line_first_nonwhitespace
+
+zle -N zhm_surround_add
 
 zle -N zhm_select_all
 zle -N zhm_collapse_selection

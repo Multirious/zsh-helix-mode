@@ -14,6 +14,9 @@ bindkey -M hnor e zhm_move_next_word_end
 bindkey -M hnor gh zhm_goto_line_start
 bindkey -M hnor gl zhm_goto_line_end
 bindkey -M hnor gs zhm_goto_line_first_nonwhitespace
+
+for char in {" ".."~"}; do; bindkey -M hnor "ms$char" zhm_surround_add; done
+
 bindkey -M hnor % zhm_select_all
 bindkey -M hnor \; zhm_collapse_selection
 bindkey -M hnor x zhm_extend_line_below
