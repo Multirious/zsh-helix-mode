@@ -341,16 +341,6 @@ function zhm_extend_line_below {
 
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
-    if [[ $CURSOR == $ZHM_SELECTION_RIGHT ]]; then
-      if (( ZHM_SELECTION_LEFT < ZHM_SELECTION_RIGHT  )); then
-        CURSOR=$((CURSOR - 1))
-      else
-        ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
-        local buffer_len=${#BUFFER}
-        ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
-      fi
-    fi
-
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
   bindkey -A hnor main
@@ -580,34 +570,24 @@ function zhm_delete_char_backward {
 
 function zhm_accept {
   ZHM_EXTENDING=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
   zle accept-line
   MARK=
   REGION_ACTIVE=0
-  ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
-  ZHM_EDITOR_HISTORY_IDX=1
 }
 
 function zhm_history_prev {
   ZHM_EXTENDING=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
   HISTNO=$((HISTNO - 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
 function zhm_history_next {
   ZHM_EXTENDING=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
   HISTNO=$((HISTNO + 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < ${#BUFFER} ? ZHM_SELECTION_RIGHT : ${#BUFFER}))
   __zhm_update_mark
 }
 
