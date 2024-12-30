@@ -592,9 +592,10 @@ function zhm_history_next {
 }
 
 function zhm_expand_or_complete {
+  local curr_cursor_pos=$CURSOR
   zle expand-or-complete
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$CURSOR
+  ZHM_SELECTION_LEFT=$curr_cursor_pos
+  ZHM_SELECTION_RIGHT=$((CURSOR + 1))
   __zhm_update_mark
 }
 
