@@ -320,6 +320,66 @@ function zhm_surround_add {
   __zhm_update_mark
 }
 
+function __zhm_find_textobject_edge {
+  local regex_left=$1
+  local regex_right=$2
+  local string_to_left=$3
+  local string_to_right=$4
+  local right
+  if [[ $string_to_right =~ "$regex_right" ]]; then
+    right=$MEND
+  else
+    right=${#BUFFER}
+  fi
+
+  local string_to_left_reversed="$(echo "$string_to_left" | rev)"
+  if [[ $string_to_left_reversed =~ "$regex_left" ]]; then
+    left=$((${#BUFFER} - MEND))
+  else
+    left=0
+  fi
+
+  echo $left $right
+}
+
+function zhm_select_word_inner {}
+
+function zhm_select_word_whitespcae_inner {}
+
+function zhm_select_surround_pair_inner {
+  local char="${KEYS:2}"
+  local left
+  local right
+  case "$char" in
+    "(" | ")")
+      left="("
+      right=")"
+      ;;
+    "[" | "]")
+      left="["
+      right="]"
+      ;;
+    "{" | "}")
+      left="{"
+      right="}"
+      ;;
+    "<" | ">")
+      left="<"
+      right=">"
+      ;;
+    *)
+      left="$char"
+      right="$char"
+      ;;
+  esac
+}
+
+function zhm_select_word_around {}
+
+function zhm_select_word_whitespcae_around {}
+
+function zhm_select_surround_pair_around {}
+
 function zhm_select_all {
   local buffer_len=${#BUFFER}
   CURSOR=$buffer_len
