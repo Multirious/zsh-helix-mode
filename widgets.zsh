@@ -412,7 +412,10 @@ function zhm_collapse_selection {
 
 # currently just select the whole buffer at the momment
 function zhm_extend_line_below {
-  zhm_select_all
+  CURSOR=${#BUFFER}
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  __zhm_update_mark
 }
 
 function zhm_normal {
