@@ -380,8 +380,7 @@ function zhm_select_word_whitespcae_around {}
 function zhm_select_surround_pair_around {}
 
 function zhm_select_all {
-  local buffer_len=${#BUFFER}
-  CURSOR=$buffer_len
+  CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
   __zhm_update_mark
