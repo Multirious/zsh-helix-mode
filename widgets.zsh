@@ -450,11 +450,9 @@ function zhm_insert {
     ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   fi
 
-  __zhm_update_mark
+  __zhm_mode_insert
 
-  ZHM_MODE=insert
-  bindkey -A hins main
-  printf "$ZHM_CURSOR_INSERT"
+  __zhm_update_mark
 }
 
 function zhm_insert_at_line_end {
@@ -480,9 +478,7 @@ function zhm_append {
   __zhm_update_mark
   CURSOR=$((CURSOR + 1))
 
-  ZHM_MODE=insert
-  bindkey -A hins main
-  printf "$ZHM_CURSOR_INSERT"
+  __zhm_mode_insert
 }
 
 function zhm_change {
@@ -498,9 +494,7 @@ function zhm_change {
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
   CURSOR=$ZHM_SELECTION_LEFT
 
-  ZHM_MODE=insert
-  bindkey -A hins main
-  printf "$ZHM_CURSOR_INSERT"
+  __zhm_mode_insert
 
   __zhm_update_mark
 }
