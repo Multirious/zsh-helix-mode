@@ -412,7 +412,7 @@ function zhm_collapse_selection {
 
 # currently just select the whole buffer at the momment
 function zhm_extend_line_below {
-  zhm_select_all
+  zle zhm_select_all
 }
 
 function zhm_normal {
