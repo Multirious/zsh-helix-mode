@@ -644,7 +644,6 @@ function zhm_delete_char_backward {
 }
 
 function zhm_accept {
-  __zhm_mode_normal
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
 
