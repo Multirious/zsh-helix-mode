@@ -36,7 +36,6 @@ source "${0:h}/widgets.zsh"
 source "${0:h}/bindkeys.zsh"
 
 function zhm_precmd {
-  ZHM_EXTENDING=0
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
   MARK=0
@@ -69,9 +68,9 @@ preexec_functions+=(zhm_preexec)
 function zhm_zle_line_pre_redraw {
   # Keeps selection range in check
 
-  if ((CURSOR > PREV_CURSOR && ZHM_EXTENDING != 1 )); then
+  if ((CURSOR > PREV_CURSOR && ZHM_MODE != select )); then
     ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  elif ((CURSOR < PREV_CURSOR && ZHM_EXTENDING != 1)); then
+  elif ((CURSOR < PREV_CURSOR && ZHM_MODE != select)); then
     ZHM_SELECTION_LEFT=$CURSOR
   fi
 
