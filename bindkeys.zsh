@@ -16,22 +16,14 @@ bindkey -M hxnor gl zhm_goto_line_end
 bindkey -M hxnor gs zhm_goto_line_first_nonwhitespace
 
 for char in {" ".."~"}; do; bindkey -M hxnor "ms$char" zhm_surround_add; done
-bindkey -M hxnor "mi(" zhm_select_surround_pair_inner_bracket
-bindkey -M hxnor "mi)" zhm_select_surround_pair_inner_bracket
-bindkey -M hxnor "ma(" zhm_select_surround_pair_around_bracket
-bindkey -M hxnor "ma)" zhm_select_surround_pair_around_bracket
-bindkey -M hxnor "mi[" zhm_select_surround_pair_inner_square_bracket
-bindkey -M hxnor "mi]" zhm_select_surround_pair_inner_square_bracket
-bindkey -M hxnor "ma[" zhm_select_surround_pair_around_square_bracket
-bindkey -M hxnor "ma]" zhm_select_surround_pair_around_square_bracket
-bindkey -M hxnor "mi{" zhm_select_surround_pair_inner_curly_bracket
-bindkey -M hxnor "mi}" zhm_select_surround_pair_inner_curly_bracket
-bindkey -M hxnor "ma{" zhm_select_surround_pair_around_curly_bracket
-bindkey -M hxnor "ma}" zhm_select_surround_pair_around_curly_bracket
-bindkey -M hxnor "mi<" zhm_select_surround_pair_inner_angle_bracket
-bindkey -M hxnor "mi>" zhm_select_surround_pair_inner_angle_bracket
-bindkey -M hxnor "ma<" zhm_select_surround_pair_around_angle_bracket
-bindkey -M hxnor "ma>" zhm_select_surround_pair_around_angle_bracket
+
+surround_pairs=("(" ")" "[" "]" "<" ">" "{" "}" "\"" "'" "\`")
+for char in $surround_pairs; do
+  bindkey -M hxnor "mi$char" zhm_select_surround_pair_inner
+done
+for char in $surround_pairs; do
+  bindkey -M hxnor "ma$char" zhm_select_surround_pair_around
+done
 
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor \; zhm_collapse_selection

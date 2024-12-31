@@ -384,25 +384,47 @@ function __zhm_find_surround_pair {
   done
 }
 
-function __zhm_select_surround_pair_inner {
-  local left=$1
-  local right=$2
-  if (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_LEFT=$left
-    ZHM_SELECTION_RIGHT=$((right - 1))
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
-  else
-    ZHM_SELECTION_LEFT=$left
-    ZHM_SELECTION_RIGHT=$((right - 1))
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
-  ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
-}
+function zhm_select_surround_pair_around {
+  local char="${KEYS:2}"
+  local left
+  local right
+  case "$char" in
+    "(" | ")")
+      left="("
+      right=")"
+      ;;
+    "[" | "]")
+      left="["
+      right="]"
+      ;;
+    "{" | "}")
+      left="{"
+      right="}"
+      ;;
+    "<" | ">")
+      left="<"
+      right=">"
+      ;;
+    "'")
+      left="'"
+      right="'"
+      ;;
+    "\"")
+      left="\""
+      right="\""
+      ;;
+    "\`")
+      left="\`"
+      right="\`"
+    ;;
+  esac
 
-function __zhm_select_surround_pair_around {
-  local left=$1
-  local right=$2
+  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
+  if [[ $? != 0 ]]; then
+    return
+  fi
+  local left=${result% *}
+  local right=${result#* }
   if (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
     ZHM_SELECTION_LEFT=$((left - 1))
     ZHM_SELECTION_RIGHT=$right
@@ -416,68 +438,58 @@ function __zhm_select_surround_pair_around {
   __zhm_update_mark
 }
 
-function zhm_select_surround_pair_inner_bracket {
-  local result=$(__zhm_find_surround_pair "(" ")" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_inner ${result% *} ${result#* }
-}
+function zhm_select_surround_pair_inner {
+  local char="${KEYS:2}"
+  local left
+  local right
+  case "$char" in
+    "(" | ")")
+      left="("
+      right=")"
+      ;;
+    "[" | "]")
+      left="["
+      right="]"
+      ;;
+    "{" | "}")
+      left="{"
+      right="}"
+      ;;
+    "<" | ">")
+      left="<"
+      right=">"
+      ;;
+    "'")
+      left="'"
+      right="'"
+      ;;
+    "\"")
+      left="\""
+      right="\""
+      ;;
+    "\`")
+      left="\`"
+      right="\`"
+    ;;
+  esac
 
-function zhm_select_surround_pair_around_bracket {
-  local result=$(__zhm_find_surround_pair "(" ")" $((CURSOR + 1)) $BUFFER)
+  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
   if [[ $? != 0 ]]; then
     return
   fi
-  __zhm_select_surround_pair_around ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_inner_square_bracket {
-  local result=$(__zhm_find_surround_pair "[" "]" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
+  local left=${result% *}
+  local right=${result#* }
+  if (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
+    ZHM_SELECTION_LEFT=$left
+    ZHM_SELECTION_RIGHT=$((right - 1))
+    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  else
+    ZHM_SELECTION_LEFT=$left
+    ZHM_SELECTION_RIGHT=$((right - 1))
+    CURSOR=$ZHM_SELECTION_LEFT
   fi
-  __zhm_select_surround_pair_inner ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_around_square_bracket {
-  local result=$(__zhm_find_surround_pair "[" "]" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_around ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_inner_curly_bracket {
-  local result=$(__zhm_find_surround_pair "{" "}" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_inner ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_around_curly_bracket {
-  local result=$(__zhm_find_surround_pair "{" "}" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_around ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_inner_angle_bracket {
-  local result=$(__zhm_find_surround_pair "<" ">" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_inner ${result% *} ${result#* }
-}
-
-function zhm_select_surround_pair_around_angle_bracket {
-  local result=$(__zhm_find_surround_pair "<" ">" $((CURSOR + 1)) $BUFFER)
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  __zhm_select_surround_pair_around ${result% *} ${result#* }
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_mark
 }
 
 function zhm_select_all {
@@ -780,14 +792,8 @@ zle -N zhm_goto_line_end
 zle -N zhm_goto_line_first_nonwhitespace
 
 zle -N zhm_surround_add
-zle -N zhm_select_surround_pair_inner_bracket
-zle -N zhm_select_surround_pair_around_bracket
-zle -N zhm_select_surround_pair_inner_square_bracket
-zle -N zhm_select_surround_pair_around_square_bracket
-zle -N zhm_select_surround_pair_inner_curly_bracket
-zle -N zhm_select_surround_pair_around_curly_bracket
-zle -N zhm_select_surround_pair_inner_angle_bracket
-zle -N zhm_select_surround_pair_around_angle_bracket
+zle -N zhm_select_surround_pair_inner
+zle -N zhm_select_surround_pair_around
 
 zle -N zhm_select_all
 zle -N zhm_collapse_selection
