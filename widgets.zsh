@@ -46,19 +46,19 @@ function __zhm_update_editor_history {
 }
 
 function __zhm_mode_normal {
-  bindkey -A hnor main
+  bindkey -A hxnor main
   ZHM_MODE=normal
   printf "$ZHM_CURSOR_NORMAL"
 }
 
 function __zhm_mode_select {
-  bindkey -A hnor main
+  bindkey -A hxnor main
   ZHM_MODE=select
   printf "$ZHM_CURSOR_SELECT"
 }
 
 function __zhm_mode_insert {
-  bindkey -A hins main
+  bindkey -A hxins main
   ZHM_MODE=insert
   printf "$ZHM_CURSOR_INSERT"
 }
