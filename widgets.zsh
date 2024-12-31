@@ -45,6 +45,24 @@ function __zhm_update_editor_history {
   fi
 }
 
+function __zhm_mode_normal {
+  bindkey -A hnor main
+  ZHM_MODE=normal
+  printf "$ZHM_CURSOR_NORMAL"
+}
+
+function __zhm_mode_select {
+  bindkey -A hnor main
+  ZHM_MODE=select
+  printf "$ZHM_CURSOR_SELECT"
+}
+
+function __zhm_mode_insert {
+  bindkey -A hins main
+  ZHM_MODE=insert
+  printf "$ZHM_CURSOR_INSERT"
+}
+
 function zhm_move_right {
   local prev_cursor=$CURSOR
   CURSOR=$((CURSOR + 1))
@@ -409,20 +427,15 @@ function zhm_normal {
 
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
-  bindkey -A hnor main
-  ZHM_MODE=normal
-  printf "$ZHM_CURSOR_NORMAL"
+  __zhm_mode_normal
   __zhm_update_mark
 }
 
 function zhm_select {
-  bindkey -A hnor main
   if [[ $ZHM_MODE == select ]]; then
-    ZHM_MODE=normal
-    printf "$ZHM_CURSOR_NORMAL"
+    __zhm_mode_normal
   else
-    ZHM_MODE=select
-    printf "$ZHM_CURSOR_SELECT"
+    __zhm_mode_select
   fi
   __zhm_update_mark
 }
@@ -498,8 +511,7 @@ function zhm_replace {
   local replace_with=$(printf "$char"'%.0s' {1..$count})
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
   if [[ $ZHM_MODE == select ]]; then
-    ZHM_MODE=normal
-    printf "$ZHM_CURSOR_NORMAL"
+    __zhm_mode_normal
   fi
   __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
 }
@@ -514,8 +526,7 @@ function zhm_delete {
   CURSOR=$ZHM_SELECTION_LEFT
 
   if [[ $ZHM_MODE == select ]]; then
-    ZHM_MODE=normal
-    printf "$ZHM_CURSOR_NORMAL"
+    __zhm_mode_normal
   fi
 
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
@@ -636,10 +647,10 @@ function zhm_delete_char_backward {
 }
 
 function zhm_accept {
-  ZHM_MODE=normal
-  printf "$ZHM_CURSOR_NORMAL"
+  __zhm_mode_normal
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
+
   zle accept-line
   MARK=
   REGION_ACTIVE=0
@@ -647,8 +658,7 @@ function zhm_accept {
 
 function zhm_history_prev {
   if [[ $ZHM_MODE == select ]]; then
-    ZHM_MODE=normal
-    printf "$ZHM_CURSOR_NORMAL"
+    __zhm_mode_normal
   fi
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
@@ -660,8 +670,7 @@ function zhm_history_prev {
 
 function zhm_history_next {
   if [[ $ZHM_MODE == select ]]; then
-    ZHM_MODE=normal
-    printf "$ZHM_CURSOR_NORMAL"
+    __zhm_mode_normal
   fi
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
