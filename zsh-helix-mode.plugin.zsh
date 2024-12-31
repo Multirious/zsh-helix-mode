@@ -68,9 +68,9 @@ preexec_functions+=(zhm_preexec)
 function zhm_zle_line_pre_redraw {
   # Keeps selection range in check
 
-  if ((CURSOR > PREV_CURSOR && ZHM_MODE != select )); then
+  if (( CURSOR > PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
     ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  elif ((CURSOR < PREV_CURSOR && ZHM_MODE != select)); then
+  elif (( CURSOR < PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
     ZHM_SELECTION_LEFT=$CURSOR
   fi
 
