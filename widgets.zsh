@@ -400,6 +400,14 @@ function zhm_extend_line_below {
 
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
+    if [[ $CURSOR == $ZHM_SELECTION_RIGHT ]]; then
+      if (( ZHM_SELECTION_LEFT < ZHM_SELECTION_RIGHT  )); then
+        CURSOR=$((CURSOR - 1))
+      else
+        ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
+      fi
+    fi
+
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
   bindkey -A hnor main
@@ -476,8 +484,6 @@ function zhm_change {
 
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=${#BUFFER}
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
   CURSOR=$ZHM_SELECTION_LEFT
 
   ZHM_MODE=insert
@@ -506,8 +512,6 @@ function zhm_delete {
 
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  local buffer_len=${#BUFFER}
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
   CURSOR=$ZHM_SELECTION_LEFT
 
   if (( ZHM_MODE == select )); then
