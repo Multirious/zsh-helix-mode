@@ -68,9 +68,9 @@ preexec_functions+=(zhm_preexec)
 function zhm_zle_line_pre_redraw {
   # Keeps selection range in check
 
-  if (( CURSOR > PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
+  if (( CURSOR > ZHM_PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
     ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  elif (( CURSOR < PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
+  elif (( CURSOR < ZHM_PREV_CURSOR )) && [[ $ZHM_MODE != select ]]; then
     ZHM_SELECTION_LEFT=$CURSOR
   fi
 
@@ -84,7 +84,7 @@ function zhm_zle_line_pre_redraw {
   __zhm_update_mark
   REGION_ACTIVE=$region_prev_active
 
-  PREV_CURSOR=$CURSOR
+  ZHM_PREV_CURSOR=$CURSOR
 }
 
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
