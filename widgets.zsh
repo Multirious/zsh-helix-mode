@@ -412,7 +412,7 @@ function zhm_normal {
   fi
   bindkey -A hnor main
   ZHM_MODE=normal
-  printf "\e[0m$ZHM_CURSOR_NORMAL"
+  printf "$ZHM_CURSOR_NORMAL"
   __zhm_update_mark
 }
 
@@ -420,10 +420,10 @@ function zhm_select {
   bindkey -A hnor main
   if ((ZHM_MODE == select)); then
     ZHM_MODE=normal
-    printf "\e[0m$ZHM_CURSOR_NORMAL"
+    printf "$ZHM_CURSOR_NORMAL"
   else
     ZHM_MODE=select
-    printf "\e[0m$ZHM_CURSOR_SELECT"
+    printf "$ZHM_CURSOR_SELECT"
   fi
   __zhm_update_mark
 }
@@ -442,7 +442,7 @@ function zhm_insert {
 
   ZHM_MODE=insert
   bindkey -A hins main
-  printf "\e[0m$ZHM_CURSOR_INSERT"
+  printf "$ZHM_CURSOR_INSERT"
 }
 
 function zhm_insert_at_line_end {
@@ -470,7 +470,7 @@ function zhm_append {
 
   ZHM_MODE=insert
   bindkey -A hins main
-  printf "\e[0m$ZHM_CURSOR_INSERT"
+  printf "$ZHM_CURSOR_INSERT"
 }
 
 function zhm_change {
@@ -488,7 +488,7 @@ function zhm_change {
 
   ZHM_MODE=insert
   bindkey -A hins main
-  printf "\e[0m$ZHM_CURSOR_INSERT"
+  printf "$ZHM_CURSOR_INSERT"
 
   __zhm_update_mark
 }
@@ -500,7 +500,7 @@ function zhm_replace {
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
   if (( ZHM_MODE == select )); then
     ZHM_MODE=normal
-    printf "\e[0m$ZHM_CURSOR_NORMAL"
+    printf "$ZHM_CURSOR_NORMAL"
   fi
   __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
 }

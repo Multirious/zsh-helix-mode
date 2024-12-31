@@ -6,14 +6,14 @@ autoload -Uz add-zle-hook-widget
 # Configurations
 # The plugin print these variables after mode changes
 
-# Pastel blue block cursor
-export ZHM_CURSOR_NORMAL="${ZHM_CURSOR_NORMAL:-\e[2 q\e]12;#B4BEFE\a}"
+# Reset then pastel blue block cursor
+export ZHM_CURSOR_NORMAL="${ZHM_CURSOR_NORMAL:-\e[0m\e[2 q\e]12;#B4BEFE\a}"
 
-# Pastel red block cursor
-export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[2 q\e]12;#F2CDCD\a}"
+# Reset then pastel red block cursor
+export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[0m\e[2 q\e]12;#F2CDCD\a}"
 
-# White vertical blinking cursor
-export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[5 q\e]12;white\a}"
+# Reset then white vertical blinking cursor
+export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[0m\e[5 q\e]12;white\a}"
 
 # This config is provided by zle. The plugin uses this as the style for selection.
 if (( ! ${+zle_highlight} )); then
@@ -44,16 +44,16 @@ function zhm_precmd {
   ZHM_EDITOR_HISTORY_IDX=1
   case $ZHM_MODE in
     insert)
-      printf "\e[0m$ZHM_CURSOR_INSERT"
+      printf "$ZHM_CURSOR_INSERT"
       ;;
     normal)
-      printf "\e[0m$ZHM_CURSOR_NORMAL"
+      printf "$ZHM_CURSOR_NORMAL"
       ;;
   esac
 }
 
 function zhm_preexec {
-  printf "\e[0m$ZHM_CURSOR_NORMAL"
+  printf "$ZHM_CURSOR_NORMAL"
   REGION_ACTIVE=0
   # Forcing zle to append current command as the latest command
   # If this isn't used, zle would just append the line after current history index
@@ -89,4 +89,4 @@ function zhm_zle_line_pre_redraw {
 
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
 
-printf "\e[0m$ZHM_CURSOR_INSERT"
+printf "$ZHM_CURSOR_INSERT"
