@@ -17,6 +17,7 @@ bindkey -M hxnor gs zhm_goto_line_first_nonwhitespace
 
 for char in {" ".."~"}; do; bindkey -M hxnor "ms$char" zhm_surround_add; done
 
+bindkey -M hxnor mm zhm_match_brackets
 surround_pairs=("(" ")" "[" "]" "<" ">" "{" "}" "\"" "'" "\`")
 for char in $surround_pairs; do
   bindkey -M hxnor "mi$char" zhm_select_surround_pair_inner

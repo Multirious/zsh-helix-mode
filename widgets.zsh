@@ -492,6 +492,61 @@ function zhm_select_surround_pair_inner {
   __zhm_update_mark
 }
 
+function zhm_match_brackets {
+  local prev_cursor=$CURSOR
+  local char="${BUFFER[$((CURSOR + 1))]}"
+  local left
+  local right
+  case "$char" in
+    "(" | ")")
+      left="("
+      right=")"
+      ;;
+    "[" | "]")
+      left="["
+      right="]"
+      ;;
+    "{" | "}")
+      left="{"
+      right="}"
+      ;;
+    "<" | ">")
+      left="<"
+      right=">"
+      ;;
+    "'")
+      left="'"
+      right="'"
+      ;;
+    "\"")
+      left="\""
+      right="\""
+      ;;
+    "\`")
+      left="\`"
+      right="\`"
+      ;;
+    *)
+      return
+      ;;
+  esac
+  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
+  if [[ $? != 0 ]]; then
+    return
+  fi
+  local left=${result% *}
+  local right=${result#* }
+  if (( ($CURSOR + 1) == $left )); then
+    CURSOR=$((right - 1))
+  elif (( ($CURSOR + 1) == $right )); then
+    CURSOR=$((left - 1))
+  fi
+
+  __zhm_handle_goto_selection $prev_cursor
+
+  __zhm_update_mark
+}
+
 function zhm_select_all {
   CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=0
@@ -791,6 +846,7 @@ zle -N zhm_goto_line_start
 zle -N zhm_goto_line_end
 zle -N zhm_goto_line_first_nonwhitespace
 
+zle -N zhm_match_brackets
 zle -N zhm_surround_add
 zle -N zhm_select_surround_pair_inner
 zle -N zhm_select_surround_pair_around
