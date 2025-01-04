@@ -17,12 +17,12 @@ ZHM_HOOK_IKNOWWHATIMDOING=0
 
 function __zhm_update_mark {
   REGION_ACTIVE=1
-  if (( (ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT) <= 1 )); then
+  if (( (ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT) <= 0 )); then
     MARK=$ZHM_SELECTION_LEFT
-  elif (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
+  elif (( CURSOR == ZHM_SELECTION_RIGHT )); then
     MARK=$ZHM_SELECTION_LEFT
   elif (( CURSOR == ZHM_SELECTION_LEFT )); then
-    MARK=$ZHM_SELECTION_RIGHT
+    MARK=$((ZHM_SELECTION_RIGHT + 1))
   fi
 }
 
@@ -64,39 +64,56 @@ function __zhm_mode_insert {
   printf "$ZHM_CURSOR_INSERT"
 }
 
-function zhm_move_right {
+function __zhm_goto {
   local prev_cursor=$CURSOR
-  CURSOR=$((CURSOR + 1))
-  if (( (prev_cursor + 1) >= ZHM_SELECTION_RIGHT )); then
-    if [[ $ZHM_MODE != select ]]; then
-      ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
-    fi
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-  elif (( prev_cursor <= ZHM_SELECTION_LEFT )); then
+  CURSOR=$1
+  if [[ $ZHM_MODE != select ]]; then
     ZHM_SELECTION_LEFT=$CURSOR
-    if [[ $ZHM_MODE != select ]]; then
+    ZHM_SELECTION_RIGHT=$CURSOR
+  elif (( prev_cursor == ZHM_SELECTION_LEFT )); then
+    if ((CURSOR <= ZHM_SELECTION_RIGHT)); then
+      ZHM_SELECTION_LEFT=$CURSOR
+    else
+      ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+      ZHM_SELECTION_RIGHT=$CURSOR
+    fi
+  elif (( prev_cursor == $ZHM_SELECTION_RIGHT )); then
+    if ((CURSOR >= ZHM_SELECTION_LEFT)); then
       ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+    else
+      ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
+      ZHM_SELECTION_LEFT=$CURSOR
     fi
   fi
+}
 
+function __zhm_trailing_goto {
+  if [[ $ZHM_MODE == select ]]; then
+    __zhm_goto $1
+
+    return
+  fi
+
+  local prev_cursor=$CURSOR
+  CURSOR=$1
+  local skip=$2
+
+  if (( CURSOR > prev_cursor )); then
+    ZHM_SELECTION_LEFT=$((prev_cursor + skip))
+    ZHM_SELECTION_RIGHT=$CURSOR
+  elif (( CURSOR < prev_cursor)); then
+    ZHM_SELECTION_RIGHT=$((prev_cursor - skip))
+    ZHM_SELECTION_LEFT=$CURSOR
+  fi
+}
+
+function zhm_move_right {
+  __zhm_goto $((CURSOR + 1))
   __zhm_update_mark
 }
 
 function zhm_move_left {
-  local prev_cursor=$CURSOR
-  CURSOR=$((CURSOR - 1))
-  if (( prev_cursor <= ZHM_SELECTION_LEFT )); then
-    if [[ $ZHM_MODE != select ]]; then
-      ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-    fi
-    ZHM_SELECTION_LEFT=$CURSOR
-  elif (( (prev_cursor + 1) >= ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-    if [[ $ZHM_MODE != select ]]; then
-      ZHM_SELECTION_LEFT=$CURSOR
-    fi
-  fi
-
+  __zhm_goto $((CURSOR - 1))
   __zhm_update_mark
 }
 
@@ -109,185 +126,90 @@ function zhm_move_down {
 }
 
 function zhm_move_next_word_start {
-  local prev_cursor=$CURSOR
   local substring="${BUFFER:$CURSOR}"
   if [[ $substring =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]; then
     local skip=0
-    CURSOR=$((CURSOR + MEND - 1))
+    local go=$((CURSOR + MEND - 1))
+
     if (( MBEGIN > 1)); then
       skip=1
     fi
-    if (( MEND <= 1)); then
-      if [[ "${substring:1}" =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]
-      then
-        CURSOR=$((CURSOR + MEND))
-        skip=1
-      fi
+
+    if (( MEND <= 1)) \
+      && [[ "${substring:1}" =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]
+    then
+      go=$((go + MEND))
+      skip=1
     fi
 
-    if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_LEFT=$((prev_cursor + skip))
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-      else
-        if (( CURSOR >= ZHM_SELECTION_RIGHT )); then
-          ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT - 1))
-          ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-        else
-          ZHM_SELECTION_LEFT=$CURSOR
-        fi
-      fi
-    elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-        ZHM_SELECTION_LEFT=$((prev_cursor + skip))
-      else
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-      fi
-    fi
+    __zhm_trailing_goto $go $skip
+    __zhm_update_mark
   fi
-
-  __zhm_update_mark
 }
 
 function zhm_move_prev_word_start {
-  local prev_cursor=$CURSOR
   local rev_buffer="$(echo "$BUFFER" | rev)"
   local substring="${rev_buffer:$((-CURSOR - 1))}"
   if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
     local skip=0
-    if (( CURSOR == ${#BUFFER} )); then
-     CURSOR=$((CURSOR - 1))
+
+    local go=$CURSOR
+    if (( go >= ${#BUFFER} )); then
+     go=$((go - 1))
     fi
-    CURSOR=$((CURSOR - MEND + 1))
+
+    go=$((go - MEND + 1))
     if (( MBEGIN > 1)); then
       skip=1
     fi
-    if (( MEND <= 1)); then
-      if [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
-      then
-        CURSOR=$((CURSOR - MEND))
-        skip=1
-      fi
+    if (( MEND <= 1)) \
+      && [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]];
+    then
+      go=$((go - MEND))
+      skip=1
     fi
 
-    if (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_RIGHT=$((prev_cursor - skip + 1))
-        ZHM_SELECTION_LEFT=$CURSOR
-      else
-        if (( CURSOR < ZHM_SELECTION_LEFT )); then
-          ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-          ZHM_SELECTION_LEFT=$CURSOR
-        else
-          ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-        fi
-      fi
-    elif (( prev_cursor == ZHM_SELECTION_LEFT )); then
-      ZHM_SELECTION_LEFT=$CURSOR
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_RIGHT=$((prev_cursor))
-      fi
-    fi
+    __zhm_trailing_goto $go $skip
+    __zhm_update_mark
   fi
-
-  __zhm_update_mark
 }
 
 function zhm_move_next_word_end {
-  local prev_cursor=$CURSOR
   local substring="${BUFFER:$CURSOR}"
   if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
     local skip=0
-    CURSOR=$((CURSOR + MEND - 1))
+    local go=$((CURSOR + MEND - 1))
     if (( MBEGIN > 1)); then
       skip=1
     fi
-    if (( MEND <= 1)); then
-      if [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
-      then
-        CURSOR=$((CURSOR + MEND))
-        skip=1
-      fi
+    if (( MEND <= 1)) \
+      && [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
+    then
+      go=$((go + MEND))
+      skip=1
     fi
 
-    if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_LEFT=$((prev_cursor + skip))
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-      else
-        if (( CURSOR >= ZHM_SELECTION_RIGHT )); then
-          ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT - 1))
-          ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-        else
-          ZHM_SELECTION_LEFT=$CURSOR
-        fi
-      fi
-    elif (( (prev_cursor + 1) == ZHM_SELECTION_RIGHT )); then
-      if [[ $ZHM_MODE != select ]]; then
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-        ZHM_SELECTION_LEFT=$((prev_cursor + skip))
-      else
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-      fi
-    fi
-  fi
-
-  __zhm_update_mark
-}
-
-function __zhm_handle_goto_selection {
-  local prev_cursor=$1
-  if [[ $ZHM_MODE != select ]]; then
-    ZHM_SELECTION_LEFT=$CURSOR
-    ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-  else
-    if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-      if ((CURSOR < (ZHM_SELECTION_RIGHT - 1))); then
-        ZHM_SELECTION_LEFT=$CURSOR
-      else
-        ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT - 1))
-        ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-      fi
-    elif (( (prev_cursor + 1) == $ZHM_SELECTION_RIGHT )); then
-      if ((CURSOR >= ZHM_SELECTION_LEFT)); then
-        ZHM_SELECTION_RIGHT=$((CURSOR + 1))
-      else
-        ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-        ZHM_SELECTION_LEFT=$CURSOR
-      fi
-    fi
+    __zhm_trailing_goto $go $skip
+    __zhm_update_mark
   fi
 }
 
 function zhm_goto_line_start {
-  local prev_cursor=$CURSOR
-  CURSOR=0
-
-  __zhm_handle_goto_selection $prev_cursor
-
+  __zhm_goto 0
   __zhm_update_mark
 }
 
 function zhm_goto_line_end {
-  local prev_cursor=$CURSOR
-  CURSOR=$((${#BUFFER} - 1))
-
-  __zhm_handle_goto_selection $prev_cursor
-
+  __zhm_goto $((${#BUFFER} - 1))
   __zhm_update_mark
 }
 
 function zhm_goto_line_first_nonwhitespace {
-  local prev_cursor=$CURSOR
   if [[ $BUFFER =~ "\s*" ]]; then
-    CURSOR=$MEND
+    __zhm_goto $MEND
   else
-    CURSOR=0
+    __zhm_goto 0
   fi
-
-  __zhm_handle_goto_selection $prev_cursor
-
   __zhm_update_mark
 }
 
@@ -323,14 +245,14 @@ function zhm_surround_add {
   local prev_right=$ZHM_SELECTION_RIGHT
 
   local buffer_left="${BUFFER:0:$ZHM_SELECTION_LEFT}"
-  local buffer_right="${BUFFER:$ZHM_SELECTION_RIGHT}"
-  local buffer_inner="${BUFFER:$ZHM_SELECTION_LEFT:$(($ZHM_SELECTION_RIGHT - $ZHM_SELECTION_LEFT))}"
+  local buffer_right="${BUFFER:$((ZHM_SELECTION_RIGHT))}"
+  local buffer_inner="${BUFFER:$ZHM_SELECTION_LEFT:$(($ZHM_SELECTION_RIGHT - $ZHM_SELECTION_LEFT + 1))}"
 
   BUFFER="$buffer_left$left$buffer_inner$right$buffer_right"
   ZHM_SELECTION_LEFT=${#buffer_left}
   ZHM_SELECTION_RIGHT=$((${#buffer_left} + ${#left} + ${#buffer_inner} + ${#right}))
-  if (( (prev_cursor + 1) == prev_right )); then
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
   else
     CURSOR=$ZHM_SELECTION_LEFT
   fi
@@ -550,13 +472,13 @@ function zhm_match_brackets {
 function zhm_select_all {
   CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  ZHM_SELECTION_RIGHT=$CURSOR
   __zhm_update_mark
 }
 
 function zhm_collapse_selection {
   ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  ZHM_SELECTION_RIGHT=$CURSOR
   __zhm_update_mark
 }
 
@@ -564,18 +486,14 @@ function zhm_collapse_selection {
 function zhm_extend_line_below {
   CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+  ZHM_SELECTION_RIGHT=$CURSOR
   __zhm_update_mark
 }
 
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
-    if [[ $CURSOR == $ZHM_SELECTION_RIGHT ]]; then
-      if (( ZHM_SELECTION_LEFT < ZHM_SELECTION_RIGHT  )); then
-        CURSOR=$((CURSOR - 1))
-      else
-        ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
-      fi
+    if (( CURSOR > ZHM_SELECTION_RIGHT )); then
+      CURSOR=$((CURSOR - 1))
     fi
 
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
@@ -590,21 +508,18 @@ function zhm_select {
   else
     __zhm_mode_select
   fi
-  __zhm_update_mark
 }
 
-function zhm_insert {
+function __zhm_save_state_before_insert {
   ZHM_BEFORE_INSERT_CURSOR=$CURSOR
   ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
   ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
+}
 
+function zhm_insert {
+  __zhm_save_state_before_insert
   CURSOR=$ZHM_SELECTION_LEFT
-  if ((ZHM_SELECTION_LEFT + 1 == ZHM_SELECTION_RIGHT)); then
-    ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-  fi
-
   __zhm_mode_insert
-
   __zhm_update_mark
 }
 
@@ -623,40 +538,25 @@ function zhm_insert_at_line_start {
 }
 
 function zhm_append {
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
-  CURSOR=$ZHM_SELECTION_RIGHT
-  CURSOR=$((CURSOR - 1))
-  __zhm_update_mark
-  CURSOR=$((CURSOR + 1))
-
+  __zhm_save_state_before_insert
+  CURSOR=$((ZHM_SELECTION_RIGHT + 1))
   __zhm_mode_insert
+  __zhm_update_mark
 }
 
 function zhm_change {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
-
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
-
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
-  CURSOR=$ZHM_SELECTION_LEFT
-
+  __zhm_save_state_before_insert
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
+  ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   __zhm_mode_insert
-
   __zhm_update_mark
 }
 
 function zhm_replace {
   local char="${KEYS:1}"
-  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT))
+  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT + 1))
   local replace_with=$(printf "$char"'%.0s' {1..$count})
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$ZHM_SELECTION_RIGHT}"
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
   fi
@@ -668,8 +568,8 @@ function zhm_delete {
   local prev_left=$ZHM_SELECTION_LEFT
   local prev_right=$ZHM_SELECTION_RIGHT
 
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + 1))
+  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
+  ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   CURSOR=$ZHM_SELECTION_LEFT
 
   if [[ $ZHM_MODE == select ]]; then
@@ -698,12 +598,13 @@ function zhm_redo {
     CURSOR="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
     ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
     ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
+    ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_mark
   fi
 }
 
 function zhm_clipboard_yank {
-  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
+  echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
 }
 
 function zhm_clipboard_paste_after {
@@ -712,15 +613,13 @@ function zhm_clipboard_paste_after {
   local prev_right=$ZHM_SELECTION_RIGHT
 
   local content="$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT))}$content${BUFFER:$ZHM_SELECTION_RIGHT}"
-  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT))
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT + 1))}$content${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT + 1))
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
-  if (( (prev_left + 1) == prev_right )); then
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
-  elif (( prev_cursor == prev_left )); then
-    CURSOR=$ZHM_SELECTION_LEFT
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
   else
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+    CURSOR=$ZHM_SELECTION_LEFT
   fi
 
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
@@ -774,6 +673,7 @@ function zhm_insert_newline {
 }
 
 function zhm_delete_char_backward {
+  local prev_cursor=$CURSOR
   zle backward-delete-char
 
   if ((CURSOR > 0)); then
@@ -788,9 +688,9 @@ function zhm_delete_char_backward {
         ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
       fi
     fi
-  fi
 
-  __zhm_update_mark
+    __zhm_update_mark
+  fi
 }
 
 function zhm_accept {
@@ -827,10 +727,10 @@ function zhm_history_next {
 }
 
 function zhm_expand_or_complete {
-  local curr_cursor_pos=$CURSOR
+  local cursor_pos_before_expand=$CURSOR
   zle expand-or-complete
-  ZHM_SELECTION_LEFT=$curr_cursor_pos
-  ZHM_SELECTION_RIGHT=$((CURSOR + 1))
+  ZHM_SELECTION_LEFT=$cursor_pos_before_expand
+  ZHM_SELECTION_RIGHT=$CURSOR
   __zhm_update_mark
 }
 
