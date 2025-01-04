@@ -245,12 +245,12 @@ function zhm_surround_add {
   local prev_right=$ZHM_SELECTION_RIGHT
 
   local buffer_left="${BUFFER:0:$ZHM_SELECTION_LEFT}"
-  local buffer_right="${BUFFER:$((ZHM_SELECTION_RIGHT))}"
+  local buffer_right="${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
   local buffer_inner="${BUFFER:$ZHM_SELECTION_LEFT:$(($ZHM_SELECTION_RIGHT - $ZHM_SELECTION_LEFT + 1))}"
 
   BUFFER="$buffer_left$left$buffer_inner$right$buffer_right"
   ZHM_SELECTION_LEFT=${#buffer_left}
-  ZHM_SELECTION_RIGHT=$((${#buffer_left} + ${#left} + ${#buffer_inner} + ${#right}))
+  ZHM_SELECTION_RIGHT=$((${#buffer_left} + ${#left} + ${#buffer_inner} + ${#right} - 1))
   if (( prev_cursor == prev_right )); then
     CURSOR=$ZHM_SELECTION_RIGHT
   else
