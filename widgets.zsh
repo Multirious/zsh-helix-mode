@@ -341,19 +341,20 @@ function zhm_select_surround_pair_around {
     ;;
   esac
 
-  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
-  if [[ $? != 0 ]]; then
+  local result
+  result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
+  if (( $? != 0 )); then
     return
   fi
   local left=${result% *}
   local right=${result#* }
-  if (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
+  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
     ZHM_SELECTION_LEFT=$((left - 1))
-    ZHM_SELECTION_RIGHT=$right
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+    ZHM_SELECTION_RIGHT=$((right - 1))
+    CURSOR=$ZHM_SELECTION_RIGHT
   else
     ZHM_SELECTION_LEFT=$((left - 1))
-    ZHM_SELECTION_RIGHT=$right
+    ZHM_SELECTION_RIGHT=$((right - 1))
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
@@ -395,19 +396,20 @@ function zhm_select_surround_pair_inner {
     ;;
   esac
 
-  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
-  if [[ $? != 0 ]]; then
+  local result
+  result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
+  if (( $? != 0 )); then
     return
   fi
   local left=${result% *}
   local right=${result#* }
-  if (( (CURSOR + 1) == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_LEFT=$left
-    ZHM_SELECTION_RIGHT=$((right - 1))
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
+    ZHM_SELECTION_LEFT=$((left))
+    ZHM_SELECTION_RIGHT=$((right - 2))
+    CURSOR=$ZHM_SELECTION_RIGHT
   else
-    ZHM_SELECTION_LEFT=$left
-    ZHM_SELECTION_RIGHT=$((right - 1))
+    ZHM_SELECTION_LEFT=$((left))
+    ZHM_SELECTION_RIGHT=$((right - 2))
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
