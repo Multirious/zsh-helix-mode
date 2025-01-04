@@ -587,6 +587,7 @@ function zhm_undo {
     CURSOR="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
     ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
     ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
+    ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_mark
   fi
 }
@@ -622,6 +623,7 @@ function zhm_clipboard_paste_after {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
 
+  ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
@@ -642,6 +644,7 @@ function zhm_clipboard_paste_before {
     CURSOR=$((ZHM_SELECTION_RIGHT - 1))
   fi
 
+  ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
 }
