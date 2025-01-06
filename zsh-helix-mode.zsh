@@ -1,3 +1,38 @@
+autoload -Uz add-zle-hook-widget
+
+# ==============================================================================
+
+# Configurations
+# The plugin print these variables after mode changes
+
+# Reset then pastel blue block cursor
+export ZHM_CURSOR_NORMAL="${ZHM_CURSOR_NORMAL:-\e[0m\e[2 q\e]12;#B4BEFE\a}"
+
+# Reset then pastel red block cursor
+export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[0m\e[2 q\e]12;#F2CDCD\a}"
+
+# Reset then white vertical blinking cursor
+export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[0m\e[5 q\e]12;white\a}"
+
+# This config is provided by zle. The plugin uses this as the style for selection.
+if (( ! ${+zle_highlight} )); then
+  zle_highlight=(region:fg=white,bg=#45475A)
+fi
+
+# Clipboard commands
+if [[ -n $DISPLAY ]]; then
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-xclip -sel clip}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-xclip -o -sel clip}"
+elif [[ -n $WAYLAND_DISPLAY ]]; then
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-wl-copy}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-wl-paste --no-newline}"
+else
+  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-}"
+  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-}"
+fi
+
+# ==============================================================================
+
 export ZHM_MODE=insert
 ZHM_SELECTION_LEFT=0
 ZHM_SELECTION_RIGHT=0
@@ -15,6 +50,8 @@ ZHM_BEFORE_INSERT_CURSOR=0
 ZHM_BEFORE_INSERT_SELECTION_LEFT=0
 ZHM_BEFORE_INSERT_SELECTION_RIGHT=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
+
+# ==============================================================================
 
 function __zhm_read_register {
   case "$1" in
@@ -862,6 +899,8 @@ function zhm_expand_or_complete {
   __zhm_update_mark
 }
 
+# ==============================================================================
+
 zle -N zhm_move_left
 zle -N zhm_move_right
 zle -N zhm_move_up
@@ -910,3 +949,148 @@ zle -N zhm_accept
 zle -N zhm_history_next
 zle -N zhm_history_prev
 zle -N zhm_expand_or_complete
+
+# ==============================================================================
+
+function zhm_precmd {
+  ZHM_SELECTION_LEFT=0
+  ZHM_SELECTION_RIGHT=0
+  MARK=0
+  REGION_ACTIVE=1
+  ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
+  ZHM_EDITOR_HISTORY_IDX=1
+  case $ZHM_MODE in
+    insert)
+      printf "$ZHM_CURSOR_INSERT"
+      ;;
+    normal)
+      printf "$ZHM_CURSOR_NORMAL"
+      ;;
+  esac
+  zhm_registers["%"]="$(pwd)"
+}
+
+function zhm_preexec {
+  printf "$ZHM_CURSOR_NORMAL"
+  REGION_ACTIVE=0
+  # Forcing zle to append current command as the latest command
+  # If this isn't used, zle would just append the line after current history index
+  # (not the latest command) which is quite unintuitive
+  # Not sure if there are better way instead of this
+  HISTNO=999999
+}
+
+precmd_functions+=(zhm_precmd)
+preexec_functions+=(zhm_preexec)
+
+function zhm_zle_line_pre_redraw {
+  # Keeps selection range in check
+
+  if (( ZHM_HOOK_IKNOWWHATIMDOING == 0 )); then
+    case "$ZHM_PREV_MODE $ZHM_MODE" in
+      "normal normal")
+        if (( CURSOR > ZHM_PREV_CURSOR )); then
+          ZHM_SELECTION_RIGHT=$CURSOR
+        elif (( CURSOR < ZHM_PREV_CURSOR )); then
+          ZHM_SELECTION_LEFT=$CURSOR
+        fi
+        ;;
+    esac
+  fi
+
+  local buffer_len=${#BUFFER}
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT < buffer_len ? ZHM_SELECTION_RIGHT : buffer_len))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT > 0 ? ZHM_SELECTION_RIGHT: 0))
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT < buffer_len ? ZHM_SELECTION_LEFT : buffer_len))
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
+  
+  local region_prev_active=$REGION_ACTIVE
+  __zhm_update_mark
+  REGION_ACTIVE=$region_prev_active
+
+  ZHM_HOOK_IKNOWWHATIMDOING=0
+  ZHM_PREV_CURSOR=$CURSOR
+  ZHM_PREV_MODE=$ZHM_MODE
+}
+
+add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
+
+printf "$ZHM_CURSOR_INSERT"
+
+# ==============================================================================
+
+bindkey -N hxnor
+bindkey -N hxins
+
+bindkey -A hxins main
+
+bindkey -M hxnor h zhm_move_left
+bindkey -M hxnor l zhm_move_right
+bindkey -M hxnor k zhm_move_up
+bindkey -M hxnor j zhm_move_down
+
+bindkey -M hxnor w zhm_move_next_word_start
+bindkey -M hxnor b zhm_move_prev_word_start
+bindkey -M hxnor e zhm_move_next_word_end
+bindkey -M hxnor gh zhm_goto_line_start
+bindkey -M hxnor gl zhm_goto_line_end
+bindkey -M hxnor gs zhm_goto_line_first_nonwhitespace
+
+for char in {" ".."~"}; do; bindkey -M hxnor "ms$char" zhm_surround_add; done
+
+bindkey -M hxnor mm zhm_match_brackets
+surround_pairs=("(" ")" "[" "]" "<" ">" "{" "}" "\"" "'" "\`")
+for char in $surround_pairs; do
+  bindkey -M hxnor "mi$char" zhm_select_surround_pair_inner
+done
+for char in $surround_pairs; do
+  bindkey -M hxnor "ma$char" zhm_select_surround_pair_around
+done
+
+bindkey -M hxnor % zhm_select_all
+bindkey -M hxnor \; zhm_collapse_selection
+bindkey -M hxnor x zhm_extend_line_below
+
+# bindkey -M hxins "jk" zhm_normal
+bindkey -M hxins "^[" zhm_normal
+bindkey -M hxnor v zhm_select
+bindkey -M hxnor i zhm_insert
+bindkey -M hxnor I zhm_insert_at_line_start
+bindkey -M hxnor A zhm_insert_at_line_end
+bindkey -M hxnor a zhm_append
+bindkey -M hxnor c zhm_change
+for char in {" ".."~"}; do
+  bindkey -M hxnor "r$char" zhm_replace
+done
+bindkey -M hxnor d zhm_delete
+bindkey -M hxnor u zhm_undo
+bindkey -M hxnor U zhm_redo
+
+bindkey -M hxnor "y" zhm_yank
+bindkey -M hxnor "p" zhm_paste_after
+bindkey -M hxnor "P" zhm_paste_before
+bindkey -M hxnor " y" zhm_clipboard_yank
+bindkey -M hxnor " p" zhm_clipboard_paste_after
+bindkey -M hxnor " P" zhm_clipboard_paste_before
+
+for char in {" ".."~"}; do
+  bindkey -M hxnor "\"${char}p" zhm_paste_after
+  bindkey -M hxnor "\"${char}P" zhm_paste_before
+  bindkey -M hxnor "\"${char}d" zhm_delete
+  bindkey -M hxnor "\"${char}c" zhm_change
+  bindkey -M hxnor "\"${char}y" zhm_yank
+done
+
+bindkey -M hxnor ^N zhm_history_next
+bindkey -M hxnor ^P zhm_history_prev
+bindkey -M hxnor "^J" zhm_accept
+bindkey -M hxnor "^M" zhm_accept
+
+bindkey -M hxins -R " "-"~" zhm_self_insert
+bindkey -M hxins "^?" zhm_delete_char_backward
+bindkey -M hxins "^J" zhm_accept
+bindkey -M hxins "^M" zhm_accept
+
+bindkey -M hxins "^N" zhm_history_next
+bindkey -M hxins "^P" zhm_history_prev
+bindkey -M hxins "^I" zhm_expand_or_complete
