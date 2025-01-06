@@ -9,6 +9,7 @@ as much as possible. The ideal is no more switching muscle memory!
 ## Installation
 
 **No plugin manager**
+
 Clone the repository to wherever you'd like and source the plugin
 ```sh
 git clone https://github.com/Multirious/zsh-helix-mode --depth 1
