@@ -9,11 +9,60 @@ ZHM_SELECTION_RIGHT=0
 # - selection position left 2
 # - selection position right 2
 zhm_editor_history=("" 0 0 0 0 0 0)
+declare -A zhm_registers
 ZHM_EDITOR_HISTORY_IDX=1
 ZHM_BEFORE_INSERT_CURSOR=0
 ZHM_BEFORE_INSERT_SELECTION_LEFT=0
 ZHM_BEFORE_INSERT_SELECTION_RIGHT=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
+
+function __zhm_read_register {
+  case "$1" in
+    "_")
+      ;;
+    "#")
+      # this should return selection indices but there's always one selection anyway
+      print "1"
+      ;;
+    ".")
+      print "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]"
+      ;;
+    "%")
+      print "$(pwd)"
+      ;;
+    "+")
+      print "$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
+      ;;
+    *)
+      local content="$zhm_registers["$1"]"
+      tmux send -t 2 "$content" Enter
+      print "$content"
+      ;;
+  esac
+}
+
+function __zhm_write_register {
+  tmux send -t 2 "$2" Enter
+  case "$1" in
+    "_"| "#" | "." | "%")
+      ;;
+    "+")
+       print "$2" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
+      ;;
+    *)
+      zhm_registers["$1"]="$2"
+      ;;
+  esac
+}
+
+function __zhm_user_specified_register {
+  if [[ $KEYS =~ "^\"(.).*" ]]; then
+    print "$match[1]"
+    return 0
+  else
+    return 1
+  fi
+ }
 
 function __zhm_update_mark {
   REGION_ACTIVE=1

@@ -50,6 +50,7 @@ function zhm_precmd {
       printf "$ZHM_CURSOR_NORMAL"
       ;;
   esac
+  zhm_registers["%"]="$(pwd)"
 }
 
 function zhm_preexec {
