@@ -25,18 +25,18 @@ zplug "multirious/zsh-helix-mode", depth:1, at:main
 
 **[Antigen](https://github.com/zsh-users/antigen)**
 
-Following antigen's plugin installation, add the below to your configuration:
+Following Antigen's plugin installation, add the below to your configuration:
 ```sh
 antigen bundle multirious/zsh-helix-mode@main
 ```
 
-**[ohmyzsh](https://github.com/ohmyzsh)**
+**[Oh My Zsh](https://github.com/ohmyzsh)**
 
-Following ohmyzsh's plugin installation, clone the repository to `$ZSH_CUSTOM` folder:
+Following Oh My Zsh's plugin installation, clone the repository to `$ZSH_CUSTOM/plugin` folder:
 ```sh
 git clone https://github.com/Multirious/zsh-helix-mode --depth 1 $ZSH_CUSTOM/plugins/zsh-helix-mode
 ```
-And add the plugin to the `plugin` array.
+And add the plugin to the `plugin` array:
 ```
 plugin=(zsh-helix-mode)
 ```
