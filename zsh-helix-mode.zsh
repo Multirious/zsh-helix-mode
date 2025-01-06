@@ -716,7 +716,7 @@ function zhm_yank {
   local content="$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]"
   __zhm_write_register "$register" "$content"
   if [[ $ZHM_MODE == "select" ]]; then
-    __zhm_normal
+    __zhm_mode_normal
   fi
 }
 
@@ -774,7 +774,7 @@ function zhm_paste_before {
 function zhm_clipboard_yank {
   print "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
   if [[ $ZHM_MODE == "select" ]]; then
-    __zhm_normal
+    __zhm_mode_normal
   fi
 }
 
