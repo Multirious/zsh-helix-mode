@@ -8,7 +8,7 @@ as much as possible. The ideal is no more switching muscle memory!
 
 ## Installation
 
-**No plugin manager**
+**Manual**
 
 Clone the repository to wherever you'd like and source the plugin.
 ```sh
@@ -16,7 +16,7 @@ git clone https://github.com/Multirious/zsh-helix-mode --depth 1
 source ./zsh-helix-mode/zsh-helix-mode.plugin.zsh
 ```
 
-**[Zplug](https://github.com/zplug/zplug)**
+**[zplug](https://github.com/zplug/zplug)**
 
 Following zplug's plugin installation, add the below to your configuration:
 ```sh
