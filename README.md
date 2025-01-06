@@ -91,35 +91,29 @@ These are printed everytime after mode changes.
 
 
 `ZHM_CURSOR_NORMAL`
-
-By default, it is `\e[0m\e[2 q\e]12;#B4BEFE\a` which is a string of ANSII escape sequences that basically means "reset, block cursor, pastel blue".
+- Prints the variable whenever the mode changes to normal mode.
+- By default, it is `\e[0m\e[2 q\e]12;#B4BEFE\a` which is a string of ANSI escape sequences that basically means "reset, block cursor, pastel blue".
 
 `ZHM_CURSOR_SELECT`
-
-
-By default, it is `\e[0m\e[2 q\e]12;#F2CDCD\a` which is a string of ANSII escape sequences that basically means "reset, block cursor, pastel red".
-
+- Prints the variable whenever the mode changes to select mode.
+- By default, it is `\e[0m\e[2 q\e]12;#F2CDCD\a` which is a string of ANSI escape sequences that basically means "reset, block cursor, pastel red".
 
 `ZHM_CURSOR_INSERT`
-
-By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSII escape sequences that basically means "reset, vertical blinking cursor, white".
+- Prints the variable whenever the mode changes to insert mode.
+- By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSI escape sequences that basically means "reset, vertical blinking cursor, white".
 
 ### Behavior
 
-
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
-
-The content of this variable should be a command that you want the yanked content to be piped to.
-By default, it is `xclip -sel clip` if the `DISPLAY` environment variable is found,
+- System yanked content will be piped to the command in this variable.
+- By default, it is `xclip -sel clip` if the `DISPLAY` environment variable is found,
 or `wl-copy` if the `WAYLAND_DISPLAY` environment variable is found,
 otherwise it is empty.
 
 
 `ZHM_CLIPBOARD_READ_CONTENT_FROM`
-
-The content of this variable should be a command that outputs clipboard
-content to stdout. It is used in pasting operations.
-By default, it is `xclip -o -sel clip` if the `DISPLAY` environment variable is found,
+- System paste will use the stdout output from the command in this variable.
+- By default, it is `xclip -o -sel clip` if the `DISPLAY` environment variable is found,
 or `wl-paste --no-newline` if the `WAYLAND_DISPLAY` environment variable is found,
 otherwise it is empty.
 
