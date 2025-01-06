@@ -43,9 +43,9 @@ bindkey -M hxnor d zhm_delete
 bindkey -M hxnor u zhm_undo
 bindkey -M hxnor U zhm_redo
 
-bindkey -M hxnor y zhm_clipboard_yank
-bindkey -M hxnor p zhm_clipboard_paste_after
-bindkey -M hxnor P zhm_clipboard_paste_before
+bindkey -M hxnor " y" zhm_clipboard_yank
+bindkey -M hxnor " p" zhm_clipboard_paste_after
+bindkey -M hxnor " P" zhm_clipboard_paste_before
 
 bindkey -M hxnor ^N zhm_history_next
 bindkey -M hxnor ^P zhm_history_prev
