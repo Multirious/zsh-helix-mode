@@ -17,6 +17,7 @@ as much as possible. The ideal is no more switching muscle memory!
 - [Configurations](#configurations)
   - [Styling](#styling)
   - [Behavior](#behavior)
+    - [Keymapping](#keymapping)
   - [Compatibility](#compatibility)
 
 ---
@@ -87,5 +88,7 @@ todo
 ### Styling
 
 ### Behavior
+
+#### Keymapping
 
 ### Compatibility
