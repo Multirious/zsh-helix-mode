@@ -16,17 +16,17 @@ git clone https://github.com/Multirious/zsh-helix-mode --depth 1
 source ./zsh-helix-mode/zsh-helix-mode.plugin.zsh
 ```
 
-**Zplug**
+**[Zplug](https://github.com/zplug/zplug)**
 ```sh
 zplug "multirious/zsh-helix-mode", depth:1, at:main
 ```
 
-**Antigen**
+**[Antigen](https://github.com/zsh-users/antigen)**
 ```sh
 antigen bundle multirious/zsh-helix-mode@main
 ```
 
-**Nix (non-flake)**
+**[Nix](https://nixos.org/) (non-flake)**
 ```nix
 let
   zsh-helix-mode = pkgs.fetchFromGithub {
@@ -41,7 +41,7 @@ source ${zsh-helix-mode}/zsh-helix-mode.plugin.zsh
 ''
 ```
 
-**Nix (flake)**
+**[Nix](https://nixos.org/) ([flake](https://nix.dev/concepts/flakes.html))**
 ```nix
 {
   inputs = {
