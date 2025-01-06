@@ -132,7 +132,7 @@ todo
 ### Compatibility
 
 #### [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping)
-If you wanted to use zsh-autosuggestions with this plugin, you can add the following configurations below:
+If you wish to use zsh-autosuggestions with this plugin, you can add the following configurations below:
 ```zsh
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(
   zhm_history_prev
@@ -147,6 +147,7 @@ ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(
 )
 ```
 More details can be seen [here](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping).
+
 This configuration has one caveat and that is partial accepting using `zhm_move_next_word_start` or `zhm_move_next_word_end`
 will leave one last character unaccepted which some can considered them undesirable/annoying (I know I am).
 Please submit an issue/PR if you have a solution!
