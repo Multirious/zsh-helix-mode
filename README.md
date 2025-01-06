@@ -6,6 +6,12 @@ Bring comfort of working with Helix keybindings to your Zsh environment.
 This plugin attempts to implement Helix keybindings as accurate and complete
 as much as possible. The ideal is no more switching muscle memory!
 
+**Sections**
+- [Installation](#Installation)
+- [Configurations](#Configurations)
+
+---
+
 ## Installation
 
 **Manual**
@@ -64,3 +70,13 @@ source ${zsh-helix-mode}/zsh-helix-mode.plugin.zsh
   };
 }
 ```
+
+## Configurations
+
+todo
+
+### Styling
+
+### Behavior
+
+### Other plugins
