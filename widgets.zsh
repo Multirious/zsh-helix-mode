@@ -8,7 +8,7 @@ ZHM_SELECTION_RIGHT=0
 # - cursor position 2
 # - selection position left 2
 # - selection position right 2
-ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
+zhm_editor_history=("" 0 0 0 0 0 0)
 ZHM_EDITOR_HISTORY_IDX=1
 ZHM_BEFORE_INSERT_CURSOR=0
 ZHM_BEFORE_INSERT_SELECTION_LEFT=0
@@ -27,21 +27,21 @@ function __zhm_update_mark {
 }
 
 function __zhm_update_editor_history {
-  if [[ "$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
-    if (( ${#ZHM_EDITOR_HISTORY} > ($ZHM_EDITOR_HISTORY_IDX * 7) )); then
-      local count=$(((${#ZHM_EDITOR_HISTORY} - ZHM_EDITOR_HISTORY_IDX * 7) - 1))
+  if [[ "$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
+    if (( ${#zhm_editor_history} > ($ZHM_EDITOR_HISTORY_IDX * 7) )); then
+      local count=$(((${#zhm_editor_history} - ZHM_EDITOR_HISTORY_IDX * 7) - 1))
       for i in {0..$count}; do
-        shift -p ZHM_EDITOR_HISTORY
+        shift -p zhm_editor_history
       done
     fi
 
-    ZHM_EDITOR_HISTORY+=("$1")
-    ZHM_EDITOR_HISTORY+=($2)
-    ZHM_EDITOR_HISTORY+=($3)
-    ZHM_EDITOR_HISTORY+=($4)
-    ZHM_EDITOR_HISTORY+=($5)
-    ZHM_EDITOR_HISTORY+=($6)
-    ZHM_EDITOR_HISTORY+=($7)
+    zhm_editor_history+=("$1")
+    zhm_editor_history+=($2)
+    zhm_editor_history+=($3)
+    zhm_editor_history+=($4)
+    zhm_editor_history+=($5)
+    zhm_editor_history+=($6)
+    zhm_editor_history+=($7)
     ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
   fi
 }
@@ -586,22 +586,22 @@ function zhm_delete {
 function zhm_undo {
   if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
     ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
-    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
-    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
-    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
+    BUFFER="$zhm_editor_history[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
+    ZHM_SELECTION_LEFT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
+    ZHM_SELECTION_RIGHT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
     ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_mark
   fi
 }
 
 function zhm_redo {
-  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#ZHM_EDITOR_HISTORY})); then
+  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#zhm_editor_history})); then
     ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
-    BUFFER="$ZHM_EDITOR_HISTORY[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
-    ZHM_SELECTION_LEFT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
-    ZHM_SELECTION_RIGHT="$ZHM_EDITOR_HISTORY[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
+    BUFFER="$zhm_editor_history[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
+    CURSOR="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
+    ZHM_SELECTION_LEFT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
+    ZHM_SELECTION_RIGHT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
     ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_mark
   fi
