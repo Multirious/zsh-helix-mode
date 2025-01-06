@@ -131,7 +131,8 @@ todo
 
 ### Compatibility
 
-If you wanted to use `zsh-autosuggestions` with this plugin, you can add the following configurations below:
+#### [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping)
+If you wanted to use zsh-autosuggestions with this plugin, you can add the following configurations below:
 ```zsh
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(
   zhm_history_prev
