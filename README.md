@@ -32,7 +32,7 @@ antigen bundle multirious/zsh-helix-mode@main
 
 **[Oh My Zsh](https://github.com/ohmyzsh)**
 
-Following Oh My Zsh's plugin installation, clone the repository to `$ZSH_CUSTOM/plugin` folder:
+Following Oh My Zsh's plugin installation, clone the repository to `$ZSH_CUSTOM/plugins` folder:
 ```sh
 git clone https://github.com/Multirious/zsh-helix-mode --depth 1 $ZSH_CUSTOM/plugins/zsh-helix-mode
 ```
