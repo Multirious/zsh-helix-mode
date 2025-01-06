@@ -89,20 +89,23 @@ You can change the cursor color and shape for each mode via these environment va
 The content of these variables should be a string of terminal escape sequences that modify the looks of your terminal cursor.
 These are printed everytime after mode changes.
 
+
 `ZHM_CURSOR_NORMAL`
 
 By default, it is `\e[0m\e[2 q\e]12;#B4BEFE\a` which is a string of ANSII escape sequences that basically means "reset, block cursor, pastel blue".
 
-- `ZHM_CURSOR_SELECT`
+`ZHM_CURSOR_SELECT`
+
 
 By default, it is `\e[0m\e[2 q\e]12;#F2CDCD\a` which is a string of ANSII escape sequences that basically means "reset, block cursor, pastel red".
 
 
-- `ZHM_CURSOR_INSERT`
-- 
+`ZHM_CURSOR_INSERT`
+
 By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSII escape sequences that basically means "reset, vertical blinking cursor, white".
 
 ### Behavior
+
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
 
