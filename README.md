@@ -8,13 +8,16 @@ as much as possible. The ideal is no more switching muscle memory!
 
 **Sections**
 - [Installation](#Installation)
-  - [manual](#manual)
+  - [Manual](#manual)
   - [zplug](#zplug)
   - [Antigen](#antigen)
-  - [Oh My Zsh](#oh_my_zsh)
-  - [Nix (non-flake)](#nix_(non-flake))
-  - [Nix (flake)](#nix_(flake))
-- [Configurations](#Configurations)
+  - [Oh My Zsh](#oh-my-zsh)
+  - [Nix (non-flake)](#nix-non-flake)
+  - [Nix (flake)](#nix-flake)
+- [Configurations](#configurations)
+  - [Styling](#styling)
+  - [Behavior](#behavior)
+  - [Compatibility](#compatibility)
 
 ---
 
@@ -85,4 +88,4 @@ todo
 
 ### Behavior
 
-### Other plugins
+### Compatibility
