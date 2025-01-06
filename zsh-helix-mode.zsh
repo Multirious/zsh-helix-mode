@@ -963,7 +963,7 @@ function zhm_precmd {
   ZHM_SELECTION_RIGHT=0
   MARK=0
   REGION_ACTIVE=1
-  ZHM_EDITOR_HISTORY=("" 0 0 0 0 0 0)
+  zhm_editor_history=("" 0 0 0 0 0 0)
   ZHM_EDITOR_HISTORY_IDX=1
   case $ZHM_MODE in
     insert)
