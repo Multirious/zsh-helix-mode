@@ -10,20 +10,32 @@ as much as possible. The ideal is no more switching muscle memory!
 
 **No plugin manager**
 
-Clone the repository to wherever you'd like and source the plugin
+Clone the repository to wherever you'd like and source the plugin.
 ```sh
 git clone https://github.com/Multirious/zsh-helix-mode --depth 1
 source ./zsh-helix-mode/zsh-helix-mode.plugin.zsh
 ```
 
 **[Zplug](https://github.com/zplug/zplug)**
+Following zplug's plugin installation, adds the below to your configuration:
 ```sh
 zplug "multirious/zsh-helix-mode", depth:1, at:main
 ```
 
 **[Antigen](https://github.com/zsh-users/antigen)**
+Following antigen's plugin installation, adds the below to your configuration:
 ```sh
 antigen bundle multirious/zsh-helix-mode@main
+```
+
+**[ohmyzsh](https://github.com/ohmyzsh)
+Clone the repository to `$ZSH_CUSTOM` folder
+```sh
+git clone https://github.com/Multirious/zsh-helix-mode --depth 1 $ZSH_CUSTOM/plugins/zsh-helix-mode
+```
+and following ohmyzsh's plugin installation, adds the plugin to the `plugin` array:
+```
+plugin=(zsh-helix-mode)
 ```
 
 **[Nix](https://nixos.org/) (non-flake)**
