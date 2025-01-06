@@ -596,6 +596,14 @@ function zhm_append {
 }
 
 function zhm_change {
+  local register
+  register=$(__zhm_user_specified_register)
+  if (( $? != 0 )); then
+    register="\""
+  fi
+
+  __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+
   __zhm_save_state_before_insert
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
   ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
@@ -616,6 +624,14 @@ function zhm_replace {
 }
 
 function zhm_delete {
+  local register
+  register=$(__zhm_user_specified_register)
+  if (( $? != 0 )); then
+    register="\""
+  fi
+
+  __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+
   local prev_cursor=$CURSOR
   local prev_left=$ZHM_SELECTION_LEFT
   local prev_right=$ZHM_SELECTION_RIGHT
@@ -656,6 +672,67 @@ function zhm_redo {
   fi
 }
 
+function zhm_yank {
+  local register
+  register=$(__zhm_user_specified_register)
+  if (( $? != 0 )); then
+    register="\""
+  fi
+  local content="$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]"
+  __zhm_write_register "$register" "$content"
+}
+
+function zhm_paste_after {
+  local register
+  register=$(__zhm_user_specified_register)
+  if (( $? != 0 )); then
+    register="\""
+  fi
+  local content=$(__zhm_read_register "$register")
+
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT + 1))}$content${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
+  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT + 1))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
+  else
+    CURSOR=$ZHM_SELECTION_LEFT
+  fi
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_mark
+}
+
+function zhm_paste_before {
+  local register
+  register=$(__zhm_user_specified_register)
+  if (( $? != 0 )); then
+    register="\""
+  fi
+  local content=$(__zhm_read_register "$register")
+  
+  local prev_cursor=$CURSOR
+  local prev_left=$ZHM_SELECTION_LEFT
+  local prev_right=$ZHM_SELECTION_RIGHT
+
+  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content} - 1))
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
+  else
+    CURSOR=$ZHM_SELECTION_LEFT
+  fi
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_mark
+}
+
 function zhm_clipboard_yank {
   echo -n "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
 }
@@ -687,13 +764,11 @@ function zhm_clipboard_paste_before {
 
   local content="$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
   BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content}))
-  if (( (prev_left + 1) == prev_right )); then
-    CURSOR=$((ZHM_SELECTION_LEFT))
-  elif (( prev_cursor == prev_left )); then
-    CURSOR=$ZHM_SELECTION_LEFT
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content} - 1))
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
   else
-    CURSOR=$((ZHM_SELECTION_RIGHT - 1))
+    CURSOR=$ZHM_SELECTION_LEFT
   fi
 
   ZHM_HOOK_IKNOWWHATIMDOING=1
@@ -822,6 +897,9 @@ zle -N zhm_delete
 zle -N zhm_undo
 zle -N zhm_redo
 
+zle -N zhm_yank
+zle -N zhm_paste_after
+zle -N zhm_paste_before
 zle -N zhm_clipboard_yank
 zle -N zhm_clipboard_paste_after
 zle -N zhm_clipboard_paste_before

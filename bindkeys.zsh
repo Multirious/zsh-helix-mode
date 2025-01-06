@@ -38,14 +38,27 @@ bindkey -M hxnor I zhm_insert_at_line_start
 bindkey -M hxnor A zhm_insert_at_line_end
 bindkey -M hxnor a zhm_append
 bindkey -M hxnor c zhm_change
-for char in {" ".."~"}; do; bindkey -M hxnor "r$char" zhm_replace; done
+for char in {" ".."~"}; do
+  bindkey -M hxnor "r$char" zhm_replace
+done
 bindkey -M hxnor d zhm_delete
 bindkey -M hxnor u zhm_undo
 bindkey -M hxnor U zhm_redo
 
+bindkey -M hxnor "y" zhm_yank
+bindkey -M hxnor "p" zhm_paste_after
+bindkey -M hxnor "P" zhm_paste_before
 bindkey -M hxnor " y" zhm_clipboard_yank
 bindkey -M hxnor " p" zhm_clipboard_paste_after
 bindkey -M hxnor " P" zhm_clipboard_paste_before
+
+for char in {" ".."~"}; do
+  bindkey -M hxnor "\"${char}p" zhm_paste_after
+  bindkey -M hxnor "\"${char}P" zhm_paste_before
+  bindkey -M hxnor "\"${char}d" zhm_delete
+  bindkey -M hxnor "\"${char}c" zhm_change
+  bindkey -M hxnor "\"${char}y" zhm_yank
+done
 
 bindkey -M hxnor ^N zhm_history_next
 bindkey -M hxnor ^P zhm_history_prev
