@@ -35,14 +35,12 @@ function __zhm_read_register {
       ;;
     *)
       local content="$zhm_registers["$1"]"
-      tmux send -t 2 "$content" Enter
       print "$content"
       ;;
   esac
 }
 
 function __zhm_write_register {
-  tmux send -t 2 "$2" Enter
   case "$1" in
     "_"| "#" | "." | "%")
       ;;
