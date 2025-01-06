@@ -550,6 +550,7 @@ function zhm_change {
   __zhm_save_state_before_insert
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
   ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
+  CURSOR=$ZHM_SELECTION_LEFT
   __zhm_mode_insert
   __zhm_update_mark
 }
