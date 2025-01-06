@@ -7,6 +7,8 @@ This plugin attempts to implement Helix keybindings as accurate and complete
 as much as possible.
 Any existing keybindings that *should* reflect the official default Helix keybinds but doesn't are considered bugs.
 
+---
+
 #### Sections
 - [Installation](#Installation)
   - [Manual](#manual)
@@ -19,8 +21,6 @@ Any existing keybindings that *should* reflect the official default Helix keybin
   - [Styling](#styling)
   - [Behavior](#behavior)
   - [Compatibility](#compatibility)
-
----
 
 ## Installation
 
