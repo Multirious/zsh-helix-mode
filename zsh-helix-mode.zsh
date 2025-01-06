@@ -817,6 +817,20 @@ function zhm_clipboard_paste_before {
   __zhm_update_mark
 }
 
+function zhm_insert_register {
+  local register="${KEYS:1}"
+  local content=$(__zhm_read_register "$register")
+
+  local prev_cursor=$CURSOR
+  BUFFER="${BUFFER:0:$((CURSOR))}$content${BUFFER:$((CURSOR))}"
+
+  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
+    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + ${#content}))
+  fi
+  CURSOR=$((CURSOR + ${#content}))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
+}
+
 function zhm_self_insert {
   local prev_cursor=$CURSOR
 
@@ -947,6 +961,7 @@ zle -N zhm_clipboard_yank
 zle -N zhm_clipboard_paste_after
 zle -N zhm_clipboard_paste_before
 
+zle -N zhm_insert_register
 zle -N zhm_self_insert
 zle -N zhm_insert_newline
 zle -N zhm_delete_char_backward
@@ -1092,6 +1107,9 @@ bindkey -M hxnor ^P zhm_history_prev
 bindkey -M hxnor "^J" zhm_accept
 bindkey -M hxnor "^M" zhm_accept
 
+for char in {" ".."~"}; do
+  bindkey -M hxins "^R$char" zhm_insert_register
+done
 bindkey -M hxins -R " "-"~" zhm_self_insert
 bindkey -M hxins "^?" zhm_delete_char_backward
 bindkey -M hxins "^J" zhm_accept
