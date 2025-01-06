@@ -97,14 +97,14 @@ These are printed everytime after mode changes.
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
 The content of this variable should be a command that you want the yanked content to be piped to.
-If `TERM` variable is found, the default will be `xclip read`.
-If `WAYLAND_TERM` variable is found, the default will be `wl-copy`
+If `DISPLAY` variable is found, the default will be `xclip -sel clip`.
+If `WAYLAND_DISPLAY` variable is found, the default will be `wl-copy`
 
 `ZHM_CLIPBOARD_READ_CONTENT_FROM`
 The content of this variable should be a command that outputs clipboard
 content to stdout. It is used in pasting operations.
-If `TERM` variable is found, the default will be `xclip read`.
-If `WAYLAND_TERM` variable is found, the default will be `wl-copy`
+If `DISPLAY` variable is found, the default will be `xclip -o -sel clip`.
+If `WAYLAND_DISPLAY` variable is found, the default will be `wl-paste --no-newline`
 
 #### Keymapping
 
