@@ -51,9 +51,9 @@ Following Oh My Zsh's plugin installation, clone the repository to `$ZSH_CUSTOM/
 ```sh
 git clone https://github.com/Multirious/zsh-helix-mode --depth 1 $ZSH_CUSTOM/plugins/zsh-helix-mode
 ```
-And add the plugin to the `plugin` array:
+And add the plugin to the `plugins` array:
 ```
-plugin=(zsh-helix-mode)
+plugins=(zsh-helix-mode)
 ```
 
 ### [Nix](https://nixos.org/) (non-flake)
