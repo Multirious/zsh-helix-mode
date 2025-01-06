@@ -84,27 +84,30 @@ source ${zsh-helix-mode}/zsh-helix-mode.plugin.zsh
 
 ### Styling
 
-You can change the cursor color and shape for each mode via environment variables.
+You can change the cursor color and shape for each mode via these environment variables:
+- `ZHM_CURSOR_NORMAL`
+- `ZHM_CURSOR_SELECT`
+- `ZHM_CURSOR_INSERT`
 
-`ZHM_CURSOR_NORMAL`
-`ZHM_CURSOR_SELECT`
-`ZHM_CURSOR_INSERT`
-
-The content of these variables should be a string of terminal escape code that modify the looks of your terminal cursor.
+The content of these variables should be a string of terminal escape sequences that modify the looks of your terminal cursor.
 These are printed everytime after mode changes.
 
 ### Behavior
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
+
 The content of this variable should be a command that you want the yanked content to be piped to.
 If `DISPLAY` variable is found, the default will be `xclip -sel clip`.
-If `WAYLAND_DISPLAY` variable is found, the default will be `wl-copy`
+If `WAYLAND_DISPLAY` variable is found, the default will be `wl-copy`.
+Otherwise it is empty.
 
 `ZHM_CLIPBOARD_READ_CONTENT_FROM`
+
 The content of this variable should be a command that outputs clipboard
 content to stdout. It is used in pasting operations.
 If `DISPLAY` variable is found, the default will be `xclip -o -sel clip`.
-If `WAYLAND_DISPLAY` variable is found, the default will be `wl-paste --no-newline`
+If `WAYLAND_DISPLAY` variable is found, the default will be `wl-paste --no-newline`.
+Otherwise it is empty.
 
 #### Keymapping
 
