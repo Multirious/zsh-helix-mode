@@ -345,48 +345,139 @@ function zhm_surround_add {
 }
 
 function zhm_select_word_inner {
-  local left_pos=$CURSOR
-  local right_pos=$CURSOR
-  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ '^[a-zA-Z0-9_]+' ]]; then
-    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT + $MEND - 1))
-  else
-    ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+  if (( CURSOR == ${#BUFFER} )); then
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
     __zhm_update_mark
     return
   fi
-  if [[ "$(print "${BUFFER:0:$((++ZHM_SELECTION_LEFT))}" | rev)" =~ '^[a-zA-Z0-9_]+' ]]; then
-    ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - $MEND + 1))
+
+  local word_start
+  if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ '\w+$' ]]; then
+    word_start=$((MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
   fi
+
+  local word_end
+  if [[ "${BUFFER:$word_start}" =~ '^\w+' ]]; then
+    word_end=$((word_start + MEND - 1))
+    word_start=$((word_start + MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
+  fi
+
+  ZHM_SELECTION_LEFT=$word_start
+  ZHM_SELECTION_RIGHT=$word_end
   CURSOR=$ZHM_SELECTION_RIGHT
+
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_mark
 }
 
 function zhm_select_word_around {
-  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ '^[a-zA-Z0-9_]+ *|^[a-zA-Z0-9_]+' ]]; then
-    # not sure why - 2 here
-    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT + $MEND - 2))
-  else
-    ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+  if (( CURSOR == ${#BUFFER} )); then
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
     __zhm_update_mark
     return
   fi
-  local left_regex
-  if [[ "$BUFFER[$((++ZHM_SELECTION_RIGHT))]" =~ ' ' ]]; then
-    left_regex='^ *[a-zA-Z0-9_]+|^ *[a-zA-Z0-9_]+'
+
+  local word_start
+  if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ ' *\w+$' ]]; then
+    word_start=$((MBEGIN - 1))
   else
-    left_regex='^[a-zA-Z0-9_]+|^[a-zA-Z0-9_]+ *'
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
   fi
-  if [[ "$(print "${BUFFER:0:$((++ZHM_SELECTION_LEFT))}" | rev)" =~ "$left_regex" ]]; then
-    ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - $MEND + 1))
+
+  local word_end
+  if [[ "${BUFFER:$word_start}" =~ '\w+ +' || "${BUFFER:$word_start}" =~ '^ *\w+' ]]; then
+    word_end=$((word_start + MEND - 1))
+    word_start=$((word_start + MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
   fi
+
+  ZHM_SELECTION_LEFT=$word_start
+  ZHM_SELECTION_RIGHT=$word_end
   CURSOR=$ZHM_SELECTION_RIGHT
+
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_mark
 }
 
-function zhm_select_long_word_inner {}
-function zhm_select_long_word_around {}
+function zhm_select_long_word_inner {
+  local word_start
+  if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ '[^ ]+ ?$' ]]; then
+    word_start=$((MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
+  fi
+
+  local word_end
+  if [[ "${BUFFER:$word_start}" =~ '[^ ]+' ]]; then
+    word_end=$((word_start + MEND - 1))
+    word_start=$((word_start + MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
+  fi
+
+  ZHM_SELECTION_LEFT=$word_start
+  ZHM_SELECTION_RIGHT=$word_end
+  CURSOR=$ZHM_SELECTION_RIGHT
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_mark
+}
+
+function zhm_select_long_word_around {
+  tmux send -t2 X"${BUFFER:0:$((CURSOR + 1))}"X Enter
+  local word_start
+  if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ ' *[^ ]+ ?$' ]]; then
+    word_start=$((MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
+  fi
+
+  local word_end
+  if [[ "${BUFFER:$word_start}" =~ '[^ ]+ +' || "${BUFFER:$word_start}" =~ '^ *[^ ]+' ]]; then
+    word_end=$((word_start + MEND - 1))
+    word_start=$((word_start + MBEGIN - 1))
+  else
+    ZHM_SELECTION_LEFT=$CURSOR
+    ZHM_SELECTION_RIGHT=$CURSOR
+    __zhm_update_mark
+    return
+  fi
+
+  ZHM_SELECTION_LEFT=$word_start
+  ZHM_SELECTION_RIGHT=$word_end
+  CURSOR=$ZHM_SELECTION_RIGHT
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_mark
+}
 
 function __zhm_find_surround_pair {
   local left_char="$1"
