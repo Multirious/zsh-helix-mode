@@ -449,7 +449,6 @@ function zhm_select_long_word_inner {
 }
 
 function zhm_select_long_word_around {
-  tmux send -t2 X"${BUFFER:0:$((CURSOR + 1))}"X Enter
   local word_start
   if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ ' *[^ ]+ ?$' ]]; then
     word_start=$((MBEGIN - 1))
