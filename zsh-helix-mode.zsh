@@ -344,6 +344,50 @@ function zhm_surround_add {
   __zhm_update_mark
 }
 
+function zhm_select_word_inner {
+  local left_pos=$CURSOR
+  local right_pos=$CURSOR
+  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ '^[a-zA-Z0-9_]+' ]]; then
+    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT + $MEND - 1))
+  else
+    ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+    __zhm_update_mark
+    return
+  fi
+  if [[ "$(print "${BUFFER:0:$((++ZHM_SELECTION_LEFT))}" | rev)" =~ '^[a-zA-Z0-9_]+' ]]; then
+    ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - $MEND + 1))
+  fi
+  CURSOR=$ZHM_SELECTION_RIGHT
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_mark
+}
+
+function zhm_select_word_around {
+  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ '^[a-zA-Z0-9_]+ *|^[a-zA-Z0-9_]+' ]]; then
+    # not sure why - 2 here
+    ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT + $MEND - 2))
+  else
+    ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+    __zhm_update_mark
+    return
+  fi
+  local left_regex
+  if [[ "$BUFFER[$((++ZHM_SELECTION_RIGHT))]" =~ ' ' ]]; then
+    left_regex='^ *[a-zA-Z0-9_]+|^ *[a-zA-Z0-9_]+'
+  else
+    left_regex='^[a-zA-Z0-9_]+|^[a-zA-Z0-9_]+ *'
+  fi
+  if [[ "$(print "${BUFFER:0:$((++ZHM_SELECTION_LEFT))}" | rev)" =~ "$left_regex" ]]; then
+    ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - $MEND + 1))
+  fi
+  CURSOR=$ZHM_SELECTION_RIGHT
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_mark
+}
+
+function zhm_select_long_word_inner {}
+function zhm_select_long_word_around {}
+
 function __zhm_find_surround_pair {
   local left_char="$1"
   local right_char="$2"
@@ -935,6 +979,10 @@ zle -N zhm_goto_line_first_nonwhitespace
 
 zle -N zhm_match_brackets
 zle -N zhm_surround_add
+zle -N zhm_select_word_inner
+zle -N zhm_select_word_around
+zle -N zhm_select_long_word_inner
+zle -N zhm_select_long_word_around
 zle -N zhm_select_surround_pair_inner
 zle -N zhm_select_surround_pair_around
 
@@ -1067,6 +1115,10 @@ done
 for char in $surround_pairs; do
   bindkey -M hxnor "ma$char" zhm_select_surround_pair_around
 done
+bindkey -M hxnor "miw" zhm_select_word_inner
+bindkey -M hxnor "maw" zhm_select_word_around
+bindkey -M hxnor "miW" zhm_select_long_word_inner
+bindkey -M hxnor "maW" zhm_select_long_word_around
 
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor \; zhm_collapse_selection
