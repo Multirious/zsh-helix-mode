@@ -34,6 +34,7 @@ fi
 # ==============================================================================
 
 export ZHM_MODE=insert
+export ZHM_MULTILINE=0
 ZHM_SELECTION_LEFT=0
 ZHM_SELECTION_RIGHT=0
 # - buffer
@@ -50,6 +51,7 @@ ZHM_BEFORE_INSERT_CURSOR=0
 ZHM_BEFORE_INSERT_SELECTION_LEFT=0
 ZHM_BEFORE_INSERT_SELECTION_RIGHT=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
+ZHM_LAST_MOVED_X=0
 
 # ==============================================================================
 
@@ -191,22 +193,117 @@ function __zhm_trailing_goto {
   fi
 }
 
+function __zhm_update_last_moved {
+  # epic regex
+  # have to do this shit to get it to match newline
+  local regex='
+[^
+]*$'
+  if [[ $LBUFFER =~ $regex ]]; then
+    ZHM_LAST_MOVED_X=$((CURSOR - MBEGIN))
+  else
+    ZHM_LAST_MOVED_X=$CURSOR
+  fi
+}
+
 function zhm_move_right {
   __zhm_goto $((CURSOR + 1))
+  __zhm_update_last_moved
   __zhm_update_mark
 }
 
 function zhm_move_left {
   __zhm_goto $((CURSOR - 1))
+  __zhm_update_last_moved
   __zhm_update_mark
 }
 
 function zhm_move_up {
-  zle up-line
+  local regex='
+[^
+]*$'
+  if [[ $LBUFFER =~ $regex ]]; then
+    __zhm_goto $((MBEGIN - 1))
+    local new_x
+    if [[ $LBUFFER =~ $regex ]]; then
+      new_x=$((CURSOR - MBEGIN))
+    else
+      new_x=$CURSOR
+    fi
+    if (( new_x > ZHM_LAST_MOVED_X )); then
+      __zhm_goto $((CURSOR - (new_x - ZHM_LAST_MOVED_X)))
+    fi
+  fi
+  __zhm_update_mark
+}
+
+function zhm_move_up_or_history_prev {
+  local regex='
+[^
+]*$'
+  if [[ $LBUFFER =~ $regex ]]; then
+    __zhm_goto $((MBEGIN - 1))
+    local new_x
+    if [[ $LBUFFER =~ $regex ]]; then
+      new_x=$((CURSOR - MBEGIN))
+    else
+      new_x=$CURSOR
+    fi
+    if (( new_x > ZHM_LAST_MOVED_X )); then
+      __zhm_goto $((CURSOR - (new_x - ZHM_LAST_MOVED_X)))
+    fi
+  else
+    zhm_history_prev
+    return
+  fi
+  __zhm_update_mark
 }
 
 function zhm_move_down {
-  zle down-line
+  local regex='^[^
+]*?
+'
+  if [[ $RBUFFER =~ $regex ]]; then
+    __zhm_goto $((CURSOR + MEND))
+    local regex='^[^
+]*?
+|^[^
+]*$'
+    if [[ $RBUFFER =~ $regex ]]; then
+      local line_last=$((MEND - 1))
+      if (( ZHM_LAST_MOVED_X <= line_last )); then
+        __zhm_goto $((CURSOR + ZHM_LAST_MOVED_X))
+      else
+        __zhm_goto $((CURSOR + line_last))
+      fi
+    fi
+  fi
+  __zhm_update_mark
+}
+
+function zhm_move_down_or_history_next {
+  local regex='^[^
+]*?
+'
+  if [[ $RBUFFER =~ $regex ]]; then
+    __zhm_goto $((CURSOR + MEND))
+    local regex='^[^
+]*?
+|^[^
+]*$'
+    if [[ $RBUFFER =~ $regex ]]; then
+      local line_last=$((MEND - 1))
+      if (( ZHM_LAST_MOVED_X <= line_last )); then
+        __zhm_goto $((CURSOR + ZHM_LAST_MOVED_X))
+      else
+        __zhm_goto $((CURSOR + line_last))
+      fi
+    fi
+  else
+    zhm_history_next
+    return
+  fi
+  __zhm_update_mark
 }
 
 function zhm_move_next_word_start {
@@ -874,10 +971,10 @@ function zhm_paste_after {
   else
     CURSOR=$ZHM_SELECTION_LEFT
   fi
-
-  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_paste_before {
@@ -900,9 +997,10 @@ function zhm_paste_before {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
 
-  ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
+  __zhm_update_last_moved
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_clipboard_yank {
@@ -927,9 +1025,10 @@ function zhm_clipboard_paste_after {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
 
-  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_clipboard_paste_before {
@@ -946,9 +1045,10 @@ function zhm_clipboard_paste_before {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
 
-  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_mark
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_insert_register {
@@ -962,6 +1062,7 @@ function zhm_insert_register {
     ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + ${#content}))
   fi
   CURSOR=$((CURSOR + ${#content}))
+  __zhm_update_last_moved
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
 }
 
@@ -975,20 +1076,36 @@ function zhm_self_insert {
   fi
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
 
+  ZHM_LAST_MOVED_X=$((ZHM_LAST_MOVED_X + 1))
+
   __zhm_update_mark
 }
 
 function zhm_insert_newline {
   local prev_cursor=$CURSOR
   # newline lol
-  BUFFER="${BUFFER}
-"
-  CURSOR=$((CURSOR + 2))
+  BUFFER="${LBUFFER}
+${RBUFFER}"
+  CURSOR=$((CURSOR + 1))
   if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + 2))
+    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + 1))
   fi
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 2))
+  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
+
+  ZHM_LAST_MOVED_X=0
+
   __zhm_update_mark
+}
+
+function zhm_multiline {
+  if (( ZHM_MULTILINE == 0 )); then
+    PREDISPLAY="-- MULTILINE --
+"
+    ZHM_MULTILINE=1
+  else
+    PREDISPLAY=""
+    ZHM_MULTILINE=0
+  fi
 }
 
 function zhm_delete_char_backward {
@@ -1019,6 +1136,14 @@ function zhm_accept {
   zle accept-line
   MARK=
   REGION_ACTIVE=0
+}
+
+function zhm_accept_or_insert_newline {
+  if (( ZHM_MULTILINE == 1 )); then
+    zhm_insert_newline
+  else
+    zhm_accept
+  fi
 }
 
 function zhm_history_prev {
@@ -1059,6 +1184,8 @@ zle -N zhm_move_left
 zle -N zhm_move_right
 zle -N zhm_move_up
 zle -N zhm_move_down
+zle -N zhm_move_up_or_history_prev
+zle -N zhm_move_down_or_history_next
 
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
@@ -1083,6 +1210,7 @@ zle -N zhm_extend_line_below
 zle -N zhm_normal
 zle -N zhm_select
 zle -N zhm_insert
+zle -N zhm_multiline
 zle -N zhm_insert_at_line_end
 zle -N zhm_insert_at_line_start
 zle -N zhm_append
@@ -1104,6 +1232,7 @@ zle -N zhm_self_insert
 zle -N zhm_insert_newline
 zle -N zhm_delete_char_backward
 zle -N zhm_accept
+zle -N zhm_accept_or_insert_newline
 
 zle -N zhm_history_next
 zle -N zhm_history_prev
@@ -1114,6 +1243,7 @@ zle -N zhm_expand_or_complete
 function zhm_precmd {
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
+  ZHM_MULTILINE=0
   MARK=0
   REGION_ACTIVE=1
   zhm_editor_history=("" 0 0 0 0 0 0)
@@ -1162,7 +1292,7 @@ function zhm_zle_line_pre_redraw {
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT > 0 ? ZHM_SELECTION_RIGHT: 0))
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT < buffer_len ? ZHM_SELECTION_LEFT : buffer_len))
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
-  
+
   local region_prev_active=$REGION_ACTIVE
   __zhm_update_mark
   REGION_ACTIVE=$region_prev_active
@@ -1185,8 +1315,8 @@ bindkey -A hxins main
 
 bindkey -M hxnor h zhm_move_left
 bindkey -M hxnor l zhm_move_right
-bindkey -M hxnor k zhm_move_up
-bindkey -M hxnor j zhm_move_down
+bindkey -M hxnor k zhm_move_up_or_history_prev
+bindkey -M hxnor j zhm_move_down_or_history_next
 
 bindkey -M hxnor w zhm_move_next_word_start
 bindkey -M hxnor b zhm_move_prev_word_start
@@ -1216,6 +1346,7 @@ bindkey -M hxnor x zhm_extend_line_below
 
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins "^[" zhm_normal
+bindkey -M hxnor "M" zhm_multiline # temporary keybind
 bindkey -M hxnor v zhm_select
 bindkey -M hxnor i zhm_insert
 bindkey -M hxnor I zhm_insert_at_line_start
@@ -1246,16 +1377,16 @@ done
 
 bindkey -M hxnor ^N zhm_history_next
 bindkey -M hxnor ^P zhm_history_prev
-bindkey -M hxnor "^J" zhm_accept
-bindkey -M hxnor "^M" zhm_accept
 
 for char in {" ".."~"}; do
   bindkey -M hxins "^R$char" zhm_insert_register
 done
 bindkey -M hxins -R " "-"~" zhm_self_insert
 bindkey -M hxins "^?" zhm_delete_char_backward
-bindkey -M hxins "^J" zhm_accept
-bindkey -M hxins "^M" zhm_accept
+bindkey -M hxnor "^J" zhm_accept
+bindkey -M hxnor "^M" zhm_accept
+bindkey -M hxins "^J" zhm_accept_or_insert_newline
+bindkey -M hxins "^M" zhm_accept_or_insert_newline
 
 bindkey -M hxins "^N" zhm_history_next
 bindkey -M hxins "^P" zhm_history_prev
