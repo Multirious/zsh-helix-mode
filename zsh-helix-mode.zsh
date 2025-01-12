@@ -350,6 +350,19 @@ function zhm_move_next_word_end {
   fi
 }
 
+function zhm_goto_first_line {
+  __zhm_goto 0
+  __zhm_update_mark
+}
+
+function zhm_goto_last_line {
+  CURSOR=${#BUFFER}
+  if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
+    __zhm_goto $((MBEGIN - 1))
+  fi
+  __zhm_update_mark
+}
+
 function zhm_goto_line_start {
   if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
@@ -1230,6 +1243,8 @@ zle -N zhm_move_down_or_history_next
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
 zle -N zhm_move_next_word_end
+zle -N zhm_goto_first_line
+zle -N zhm_goto_last_line
 zle -N zhm_goto_line_start
 zle -N zhm_goto_line_end
 zle -N zhm_goto_line_first_nonwhitespace
@@ -1364,6 +1379,8 @@ bindkey -M hxnor j zhm_move_down_or_history_next
 bindkey -M hxnor w zhm_move_next_word_start
 bindkey -M hxnor b zhm_move_prev_word_start
 bindkey -M hxnor e zhm_move_next_word_end
+bindkey -M hxnor gg zhm_goto_first_line
+bindkey -M hxnor ge zhm_goto_last_line
 bindkey -M hxnor gh zhm_goto_line_start
 bindkey -M hxnor gl zhm_goto_line_end
 bindkey -M hxnor gs zhm_goto_line_first_nonwhitespace
