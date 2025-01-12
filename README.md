@@ -135,9 +135,11 @@ otherwise it is empty.
 or `wl-paste --no-newline` if the `WAYLAND_DISPLAY` environment variable is found,<br/>
 otherwise it is empty.
 
-#### Keymapping
+#### Keymaps
 
-todo
+Some keys are custom to this plugin and not presented in Helix.
+- `Alt-Enter` for enabling and disabling multiline mode for both Insert and Normal mode.
+- `Ctrl-p` and `Ctrl-n` for previous and next command histroy. Note that `J` and `K` is also supported.
 
 ### Compatibility
 
