@@ -139,7 +139,7 @@ otherwise it is empty.
 
 Some keys are custom to this plugin and not presented in Helix.
 - `Alt-Enter` for enabling and disabling multiline mode for both Insert and Normal mode.
-- `Ctrl-p` and `Ctrl-n` for previous and next command histroy. Note that `J` and `K` is also supported.
+- `Ctrl-p` and `Ctrl-n` in Normal mode for previous and next command histroy. Note that `j` and `k` is also supported.
 
 ### Compatibility
 
