@@ -795,10 +795,6 @@ function zhm_extend_to_line_bounds {
 }
 
 function zhm_extend_line_below {
-  local prev_cursor=$CURSOR
-  local prev_right=$ZHM_SELECTION_RIGHT
-  local prev_left=$ZHM_SELECTION_LEFT
-
   if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
     ZHM_SELECTION_LEFT=$((MBEGIN - 1))
   fi
@@ -811,11 +807,7 @@ function zhm_extend_line_below {
   if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $regex ]]; then
     ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
   fi
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  CURSOR=$ZHM_SELECTION_RIGHT
   __zhm_update_last_moved
   __zhm_update_mark
 }
