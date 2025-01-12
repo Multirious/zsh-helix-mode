@@ -874,16 +874,23 @@ function zhm_insert {
 }
 
 function zhm_insert_at_line_end {
-  CURSOR=${#BUFFER}
+  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
+    __zhm_goto $((CURSOR + MEND))
+  fi
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$CURSOR
   zhm_insert
 }
 
 function zhm_insert_at_line_start {
-  CURSOR=0
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
+  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
+    local line="${BUFFER:0:$((CURSOR + MEND))}"
+    if [[ $line =~ $'[^\n ]*$' ]]; then
+      CURSOR=$((MBEGIN - 1))
+    fi
+  fi
+  ZHM_SELECTION_LEFT=$CURSOR
+  ZHM_SELECTION_RIGHT=$CURSOR
   zhm_insert
 }
 
