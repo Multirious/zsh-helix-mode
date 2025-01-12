@@ -350,6 +350,42 @@ function zhm_move_next_word_end {
   fi
 }
 
+function zhm_find_till_char {
+  local char="${KEYS:1}"
+  char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
+  if [[ $RBUFFER =~ "[^$char]*" ]]; then
+    __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
+  fi
+  __zhm_update_mark
+}
+
+function zhm_find_next_char {
+  local char="${KEYS:1}"
+  char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
+  if [[ $RBUFFER =~ "$char" ]]; then
+    __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
+  fi
+  __zhm_update_mark
+}
+
+function zhm_till_prev_char {
+  local char="${KEYS:1}"
+  char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
+  if [[ $LBUFFER =~ "[^$char]*$" ]]; then
+    __zhm_trailing_goto $((MBEGIN - 1))
+  fi
+  __zhm_update_mark
+}
+
+function zhm_find_prev_char {
+  local char="${KEYS:1}"
+  char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
+  if [[ $LBUFFER =~ "${char}[^${char}]*$" ]]; then
+    __zhm_trailing_goto $((MBEGIN - 1))
+  fi
+  __zhm_update_mark
+}
+
 function zhm_goto_first_line {
   __zhm_goto 0
   __zhm_update_mark
@@ -1239,6 +1275,10 @@ zle -N zhm_move_up
 zle -N zhm_move_down
 zle -N zhm_move_up_or_history_prev
 zle -N zhm_move_down_or_history_next
+zle -N zhm_find_till_char
+zle -N zhm_find_next_char
+zle -N zhm_till_prev_char
+zle -N zhm_find_prev_char
 
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
@@ -1379,6 +1419,12 @@ bindkey -M hxnor j zhm_move_down_or_history_next
 bindkey -M hxnor w zhm_move_next_word_start
 bindkey -M hxnor b zhm_move_prev_word_start
 bindkey -M hxnor e zhm_move_next_word_end
+for char in {" ".."~"}; do
+  bindkey -M hxnor "t$char" zhm_find_till_char
+  bindkey -M hxnor "f$char" zhm_find_next_char
+  bindkey -M hxnor "T$char" zhm_till_prev_char
+  bindkey -M hxnor "F$char" zhm_find_prev_char
+done
 bindkey -M hxnor gg zhm_goto_first_line
 bindkey -M hxnor ge zhm_goto_last_line
 bindkey -M hxnor gh zhm_goto_line_start
