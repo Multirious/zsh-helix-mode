@@ -52,6 +52,8 @@ ZHM_BEFORE_INSERT_SELECTION_LEFT=0
 ZHM_BEFORE_INSERT_SELECTION_RIGHT=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
 ZHM_LAST_MOVED_X=0
+ZHM_LAST_MOTION=""
+ZHM_LAST_MOTION_CHAR=""
 
 # ==============================================================================
 
@@ -353,27 +355,34 @@ function zhm_move_next_word_end {
 function zhm_find_till_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $RBUFFER =~ "[^$char]*" ]]; then
+  if [[ $RBUFFER =~ ".?$char?[^$char]*" ]]; then
     __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
   fi
+
+  ZHM_LAST_MOTION="find_till"
+  ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_mark
 }
 
 function zhm_find_next_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $RBUFFER =~ "$char" ]]; then
+  if [[ $RBUFFER =~ "$char?[^$char]*$char" ]]; then
     __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
   fi
+  ZHM_LAST_MOTION="find_next"
+  ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_mark
 }
 
 function zhm_till_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $LBUFFER =~ "[^$char]*$" ]]; then
-    __zhm_trailing_goto $((MBEGIN - 1))
+  if [[ $LBUFFER =~ "[^$char]*$char?$" ]]; then
+    __zhm_trailing_goto $((MBEGIN - 1)) 0
   fi
+  ZHM_LAST_MOTION="till_prev"
+  ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_mark
 }
 
@@ -381,8 +390,37 @@ function zhm_find_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
   if [[ $LBUFFER =~ "${char}[^${char}]*$" ]]; then
-    __zhm_trailing_goto $((MBEGIN - 1))
+    __zhm_trailing_goto $((MBEGIN - 1)) 0
   fi
+  ZHM_LAST_MOTION="find_prev"
+  ZHM_LAST_MOTION_CHAR="$char"
+  __zhm_update_mark
+}
+
+function zhm_repeat_last_motion {
+  local char="$ZHM_LAST_MOTION_CHAR"
+  case "$ZHM_LAST_MOTION" in
+    "find_till")
+      if [[ $RBUFFER =~ ".?$char?[^$char]*" ]]; then
+        __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
+      fi
+      ;;
+    "find_next")
+      if [[ $RBUFFER =~ "$char?[^$char]*$char" ]]; then
+        __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
+      fi
+      ;;
+    "till_prev")
+      if [[ $LBUFFER =~ "[^$char]*$char?$" ]]; then
+        __zhm_trailing_goto $((MBEGIN - 1)) 0
+      fi
+      ;;
+    "find_prev")
+      if [[ $LBUFFER =~ "${char}[^${char}]*$" ]]; then
+        __zhm_trailing_goto $((MBEGIN - 1)) 0
+      fi
+      ;;    
+  esac
   __zhm_update_mark
 }
 
@@ -1279,6 +1317,7 @@ zle -N zhm_find_till_char
 zle -N zhm_find_next_char
 zle -N zhm_till_prev_char
 zle -N zhm_find_prev_char
+zle -N zhm_repeat_last_motion
 
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
@@ -1425,6 +1464,7 @@ for char in {" ".."~"}; do
   bindkey -M hxnor "T$char" zhm_till_prev_char
   bindkey -M hxnor "F$char" zhm_find_prev_char
 done
+bindkey -M hxnor "^[." zhm_repeat_last_motion
 bindkey -M hxnor gg zhm_goto_first_line
 bindkey -M hxnor ge zhm_goto_last_line
 bindkey -M hxnor gh zhm_goto_line_start
