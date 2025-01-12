@@ -1437,8 +1437,6 @@ bindkey -M hxnor mm zhm_match_brackets
 surround_pairs=("(" ")" "[" "]" "<" ">" "{" "}" "\"" "'" "\`")
 for char in $surround_pairs; do
   bindkey -M hxnor "mi$char" zhm_select_surround_pair_inner
-done
-for char in $surround_pairs; do
   bindkey -M hxnor "ma$char" zhm_select_surround_pair_around
 done
 bindkey -M hxnor "miw" zhm_select_word_inner
