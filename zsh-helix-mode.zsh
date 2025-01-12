@@ -351,20 +351,25 @@ function zhm_move_next_word_end {
 }
 
 function zhm_goto_line_start {
-  __zhm_goto 0
+  if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
+    __zhm_goto $((MBEGIN - 1))
+  fi
   __zhm_update_mark
 }
 
 function zhm_goto_line_end {
-  __zhm_goto $((${#BUFFER} - 1))
+  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
+    __zhm_goto $((CURSOR + MEND - 1))
+  fi
   __zhm_update_mark
 }
 
 function zhm_goto_line_first_nonwhitespace {
-  if [[ $BUFFER =~ "\s*" ]]; then
-    __zhm_goto $MEND
-  else
-    __zhm_goto 0
+  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
+    local line="${BUFFER:0:$((CURSOR + MEND))}"
+    if [[ $line =~ $'[^\n ]*$' ]]; then
+      __zhm_goto $((MBEGIN - 1))
+    fi
   fi
   __zhm_update_mark
 }
