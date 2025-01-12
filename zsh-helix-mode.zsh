@@ -795,17 +795,24 @@ function zhm_extend_to_line_bounds {
 }
 
 function zhm_extend_line_below {
-  if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
-    ZHM_SELECTION_LEFT=$((MBEGIN - 1))
-  fi
-  local regex
-  if [[ "${BUFFER[$((ZHM_SELECTION_RIGHT + 1))]}" == $'\n' ]]; then
-    regex=$'^\n[^\n]*\n|^\n[^\n]*$'
+  if [[ "$BUFFER[$((ZHM_SELECTION_LEFT + 1))]" == $'\n' ]]; then
+    if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
+      ZHM_SELECTION_LEFT=$((MBEGIN - 1))
+    fi
   else
-    regex=$'^[^\n]*\n|^[^\n]*$'
-  fi
-  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $regex ]]; then
-    ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
+    if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
+      ZHM_SELECTION_LEFT=$((MBEGIN - 1))
+    fi
+
+    local regex
+    if [[ "${BUFFER[$((ZHM_SELECTION_RIGHT + 1))]}" == $'\n' ]]; then
+      regex=$'^\n[^\n]*\n|^\n[^\n]*$'
+    else
+      regex=$'^[^\n]*\n|^[^\n]*$'
+    fi
+    if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $regex ]]; then
+      ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
+    fi
   fi
   CURSOR=$ZHM_SELECTION_RIGHT
   __zhm_update_last_moved
