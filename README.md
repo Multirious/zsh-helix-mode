@@ -7,6 +7,16 @@ This plugin attempts to implement Helix keybindings as accurate and complete
 as much as possible.
 Any existing keybindings that *should* reflect the official default Helix keybinds but doesn't are considered bugs.
 
+**Features**
+- Accurate Helix replication. No more switching muscle memory.
+- Helix's selection manipulation and movemnt.
+- Match, Goto, Insert, Append, Change, Replace. Most common modes are available to use.
+- Registers.
+- Yank-Paste. For both registers and clipboard.
+- Undo-Redo. And with selection history like Helix's.
+- Multiline mode. Edit long commands right in the prompt.
+- Cursor styling. Display different modes with different cursor looks.
+
 ---
 
 #### Sections
