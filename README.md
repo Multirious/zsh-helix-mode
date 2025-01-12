@@ -10,7 +10,7 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 **Features**
 - Accurate Helix replication. No more switching muscle memory.
 - Helix's selection manipulation and movemnt.
-- Match, Goto, Insert, Append, Change, Replace. Most common modes are available to use.
+- Match, Goto, Insert, Append, Change, Replace.
 - Registers.
 - Yank-Paste. For both registers and clipboard.
 - Undo-Redo. And with selection history like Helix's.
