@@ -14,7 +14,7 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 - Registers.
 - Yank-Paste. For both registers and clipboard.
 - Undo-Redo. And with selection history like Helix's.
-- Multiline mode. Edit long commands right in the prompt.
+- Multiline mode. Edit long commands right in the prompt. (Basically Helix)
 - Cursor styling. Display different modes with different cursor looks.
 
 ---
