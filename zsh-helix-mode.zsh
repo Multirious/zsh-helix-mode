@@ -1380,7 +1380,10 @@ bindkey -M hxnor X zhm_extend_to_line_bounds
 
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins "^[" zhm_normal
-bindkey -M hxnor "M" zhm_multiline # temporary keybind
+bindkey -M hxnor "^[^M" zhm_multiline
+bindkey -M hxnor "^[^J" zhm_multiline
+bindkey -M hxins "^[^M" zhm_multiline
+bindkey -M hxins "^[^J" zhm_multiline
 bindkey -M hxnor v zhm_select
 bindkey -M hxnor i zhm_insert
 bindkey -M hxnor I zhm_insert_at_line_start
