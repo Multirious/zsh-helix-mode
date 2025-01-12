@@ -194,12 +194,7 @@ function __zhm_trailing_goto {
 }
 
 function __zhm_update_last_moved {
-  # epic regex
-  # have to do this shit to get it to match newline
-  local regex='
-[^
-]*$'
-  if [[ $LBUFFER =~ $regex ]]; then
+  if [[ $LBUFFER =~ $'\n[^\n]*$' ]]; then
     ZHM_LAST_MOVED_X=$((CURSOR - MBEGIN))
   else
     ZHM_LAST_MOVED_X=$CURSOR
@@ -219,13 +214,10 @@ function zhm_move_left {
 }
 
 function zhm_move_up {
-  local regex='
-[^
-]*$'
-  if [[ $LBUFFER =~ $regex ]]; then
+  if [[ $LBUFFER =~ $'\n[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
     local new_x
-    if [[ $LBUFFER =~ $regex ]]; then
+    if [[ $LBUFFER =~ $'\n[^\n]*$' ]]; then
       new_x=$((CURSOR - MBEGIN))
     else
       new_x=$CURSOR
@@ -238,13 +230,10 @@ function zhm_move_up {
 }
 
 function zhm_move_up_or_history_prev {
-  local regex='
-[^
-]*$'
-  if [[ $LBUFFER =~ $regex ]]; then
+  if [[ $LBUFFER =~ $'\n[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
     local new_x
-    if [[ $LBUFFER =~ $regex ]]; then
+    if [[ $LBUFFER =~ $'\n[^\n]*$' ]]; then
       new_x=$((CURSOR - MBEGIN))
     else
       new_x=$CURSOR
@@ -260,16 +249,9 @@ function zhm_move_up_or_history_prev {
 }
 
 function zhm_move_down {
-  local regex='^[^
-]*?
-'
-  if [[ $RBUFFER =~ $regex ]]; then
+  if [[ $RBUFFER =~ $'^[^\n]*?\n' ]]; then
     __zhm_goto $((CURSOR + MEND))
-    local regex='^[^
-]*?
-|^[^
-]*$'
-    if [[ $RBUFFER =~ $regex ]]; then
+    if [[ $RBUFFER =~ $'^[^\n]*?\n|^[^\n]*$' ]]; then
       local line_last=$((MEND - 1))
       if (( ZHM_LAST_MOVED_X <= line_last )); then
         __zhm_goto $((CURSOR + ZHM_LAST_MOVED_X))
@@ -282,16 +264,9 @@ function zhm_move_down {
 }
 
 function zhm_move_down_or_history_next {
-  local regex='^[^
-]*?
-'
-  if [[ $RBUFFER =~ $regex ]]; then
+  if [[ $RBUFFER =~ $'^[^\n]*?\n' ]]; then
     __zhm_goto $((CURSOR + MEND))
-    local regex='^[^
-]*?
-|^[^
-]*$'
-    if [[ $RBUFFER =~ $regex ]]; then
+    if [[ $RBUFFER =~ $'^[^\n]*?\n|^[^\n]*$' ]]; then
       local line_last=$((MEND - 1))
       if (( ZHM_LAST_MOVED_X <= line_last )); then
         __zhm_goto $((CURSOR + ZHM_LAST_MOVED_X))
@@ -799,11 +774,49 @@ function zhm_collapse_selection {
   __zhm_update_mark
 }
 
-# currently just select the whole buffer at the momment
+function zhm_extend_to_line_bounds {
+  local prev_cursor=$CURSOR
+  local prev_right=$ZHM_SELECTION_RIGHT
+  local prev_left=$ZHM_SELECTION_LEFT
+
+  if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
+    ZHM_SELECTION_LEFT=$((MBEGIN - 1))
+  fi
+  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $'^[^\n]*\n|^[^\n]*$' ]]; then
+    ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
+  fi
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
+  else
+    CURSOR=$ZHM_SELECTION_LEFT
+  fi
+  __zhm_update_last_moved
+  __zhm_update_mark
+}
+
 function zhm_extend_line_below {
-  CURSOR=${#BUFFER}
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=$CURSOR
+  local prev_cursor=$CURSOR
+  local prev_right=$ZHM_SELECTION_RIGHT
+  local prev_left=$ZHM_SELECTION_LEFT
+
+  if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
+    ZHM_SELECTION_LEFT=$((MBEGIN - 1))
+  fi
+  local regex
+  if [[ "${BUFFER[$((ZHM_SELECTION_RIGHT + 1))]}" == $'\n' ]]; then
+    regex=$'^\n[^\n]*\n|^\n[^\n]*$'
+  else
+    regex=$'^[^\n]*\n|^[^\n]*$'
+  fi
+  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $regex ]]; then
+    ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
+  fi
+  if (( prev_cursor == prev_right )); then
+    CURSOR=$ZHM_SELECTION_RIGHT
+  else
+    CURSOR=$ZHM_SELECTION_LEFT
+  fi
+  __zhm_update_last_moved
   __zhm_update_mark
 }
 
@@ -1206,6 +1219,7 @@ zle -N zhm_select_surround_pair_around
 zle -N zhm_select_all
 zle -N zhm_collapse_selection
 zle -N zhm_extend_line_below
+zle -N zhm_extend_to_line_bounds
 
 zle -N zhm_normal
 zle -N zhm_select
@@ -1343,6 +1357,7 @@ bindkey -M hxnor "maW" zhm_select_long_word_around
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor \; zhm_collapse_selection
 bindkey -M hxnor x zhm_extend_line_below
+bindkey -M hxnor X zhm_extend_to_line_bounds
 
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins "^[" zhm_normal
