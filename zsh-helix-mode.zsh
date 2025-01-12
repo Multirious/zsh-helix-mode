@@ -774,6 +774,22 @@ function zhm_collapse_selection {
   __zhm_update_mark
 }
 
+function zhm_flip_selections {
+  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
+    CURSOR=$ZHM_SELECTION_LEFT
+  else
+    CURSOR=$ZHM_SELECTION_RIGHT
+  fi
+  __zhm_update_last_moved
+  __zhm_update_mark
+}
+
+function zhm_ensure_selections_forward {
+  CURSOR=$ZHM_SELECTION_RIGHT
+  __zhm_update_last_moved
+  __zhm_update_mark
+}
+
 function zhm_extend_to_line_bounds {
   local prev_cursor=$CURSOR
   local prev_right=$ZHM_SELECTION_RIGHT
@@ -1217,6 +1233,8 @@ zle -N zhm_select_surround_pair_around
 
 zle -N zhm_select_all
 zle -N zhm_collapse_selection
+zle -N zhm_flip_selections
+zle -N zhm_ensure_selections_forward
 zle -N zhm_extend_line_below
 zle -N zhm_extend_to_line_bounds
 
@@ -1355,6 +1373,8 @@ bindkey -M hxnor "maW" zhm_select_long_word_around
 
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor \; zhm_collapse_selection
+bindkey -M hxnor "^[;" zhm_flip_selections
+bindkey -M hxnor "^[:" zhm_ensure_selections_forward
 bindkey -M hxnor x zhm_extend_line_below
 bindkey -M hxnor X zhm_extend_to_line_bounds
 
