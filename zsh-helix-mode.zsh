@@ -106,17 +106,6 @@ function __zhm_user_specified_register {
   fi
  }
 
-function __zhm_update_mark {
-  REGION_ACTIVE=1
-  if (( (ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT) <= 0 )); then
-    MARK=$ZHM_SELECTION_LEFT
-  elif (( CURSOR == ZHM_SELECTION_RIGHT )); then
-    MARK=$ZHM_SELECTION_LEFT
-  elif (( CURSOR == ZHM_SELECTION_LEFT )); then
-    MARK=$((ZHM_SELECTION_RIGHT + 1))
-  fi
-}
-
 function __zhm_update_region_highlight {
   local main_highlight="$ZHM_SELECTION_LEFT $((ZHM_SELECTION_RIGHT + 1)) $ZHM_STYLE_SELECTION memo=zhm_highlight"
   region_highlight=(
