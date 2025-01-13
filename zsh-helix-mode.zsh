@@ -19,6 +19,9 @@ if (( ! ${+zle_highlight} )); then
   zle_highlight=(region:fg=white,bg=#45475A)
 fi
 
+# Uses the syntax from https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
+export ZHM_STYLE_SELECTION="fg=white,bg=#45475a"
+
 # Clipboard commands
 if [[ -n $DISPLAY ]]; then
   export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-xclip -sel clip}"
@@ -114,6 +117,15 @@ function __zhm_update_mark {
   fi
 }
 
+function __zhm_update_region_highlight {
+  local main_highlight="$ZHM_SELECTION_LEFT $((ZHM_SELECTION_RIGHT + 1)) $ZHM_STYLE_SELECTION memo=zhm_highlight"
+  region_highlight=(
+    "${region_highlight:#*memo=zhm_highlight}"
+  )
+  region_highlight+=( "$main_highlight" )
+  echo "$region_highlight" >> /tmp/zhm_log
+}
+
 function __zhm_update_editor_history {
   if [[ "$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
     if (( ${#zhm_editor_history} > ($ZHM_EDITOR_HISTORY_IDX * 7) )); then
@@ -206,13 +218,13 @@ function __zhm_update_last_moved {
 function zhm_move_right {
   __zhm_goto $((CURSOR + 1))
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_left {
   __zhm_goto $((CURSOR - 1))
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_up {
@@ -228,7 +240,7 @@ function zhm_move_up {
       __zhm_goto $((CURSOR - (new_x - ZHM_LAST_MOVED_X)))
     fi
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_up_or_history_prev {
@@ -247,7 +259,7 @@ function zhm_move_up_or_history_prev {
     zhm_history_prev
     return
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_down {
@@ -262,7 +274,7 @@ function zhm_move_down {
       fi
     fi
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_down_or_history_next {
@@ -280,7 +292,7 @@ function zhm_move_down_or_history_next {
     zhm_history_next
     return
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_move_next_word_start {
@@ -301,7 +313,7 @@ function zhm_move_next_word_start {
     fi
 
     __zhm_trailing_goto $go $skip
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -328,7 +340,7 @@ function zhm_move_prev_word_start {
     fi
 
     __zhm_trailing_goto $go $skip
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -348,7 +360,7 @@ function zhm_move_next_word_end {
     fi
 
     __zhm_trailing_goto $go $skip
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -361,7 +373,7 @@ function zhm_find_till_char {
 
   ZHM_LAST_MOTION="find_till"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_find_next_char {
@@ -372,7 +384,7 @@ function zhm_find_next_char {
   fi
   ZHM_LAST_MOTION="find_next"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_till_prev_char {
@@ -383,7 +395,7 @@ function zhm_till_prev_char {
   fi
   ZHM_LAST_MOTION="till_prev"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_find_prev_char {
@@ -394,7 +406,7 @@ function zhm_find_prev_char {
   fi
   ZHM_LAST_MOTION="find_prev"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_repeat_last_motion {
@@ -421,12 +433,12 @@ function zhm_repeat_last_motion {
       fi
       ;;    
   esac
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_goto_first_line {
   __zhm_goto 0
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_goto_last_line {
@@ -434,21 +446,21 @@ function zhm_goto_last_line {
   if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_goto_line_start {
   if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_goto_line_end {
   if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
     __zhm_goto $((CURSOR + MEND - 1))
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_goto_line_first_nonwhitespace {
@@ -458,7 +470,7 @@ function zhm_goto_line_first_nonwhitespace {
       __zhm_goto $((MBEGIN - 1))
     fi
   fi
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_surround_add {
@@ -505,14 +517,14 @@ function zhm_surround_add {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_word_inner {
   if (( CURSOR == ${#BUFFER} )); then
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -522,7 +534,7 @@ function zhm_select_word_inner {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -533,7 +545,7 @@ function zhm_select_word_inner {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -542,14 +554,14 @@ function zhm_select_word_inner {
   CURSOR=$ZHM_SELECTION_RIGHT
 
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_word_around {
   if (( CURSOR == ${#BUFFER} )); then
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -559,7 +571,7 @@ function zhm_select_word_around {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -570,7 +582,7 @@ function zhm_select_word_around {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -579,7 +591,7 @@ function zhm_select_word_around {
   CURSOR=$ZHM_SELECTION_RIGHT
 
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_long_word_inner {
@@ -589,7 +601,7 @@ function zhm_select_long_word_inner {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -600,7 +612,7 @@ function zhm_select_long_word_inner {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -609,7 +621,7 @@ function zhm_select_long_word_inner {
   CURSOR=$ZHM_SELECTION_RIGHT
 
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_long_word_around {
@@ -619,7 +631,7 @@ function zhm_select_long_word_around {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -630,7 +642,7 @@ function zhm_select_long_word_around {
   else
     ZHM_SELECTION_LEFT=$CURSOR
     ZHM_SELECTION_RIGHT=$CURSOR
-    __zhm_update_mark
+    __zhm_update_region_highlight
     return
   fi
 
@@ -639,7 +651,7 @@ function zhm_select_long_word_around {
   CURSOR=$ZHM_SELECTION_RIGHT
 
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function __zhm_find_surround_pair {
@@ -740,7 +752,7 @@ function zhm_select_surround_pair_around {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_surround_pair_inner {
@@ -795,7 +807,7 @@ function zhm_select_surround_pair_inner {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_match_brackets {
@@ -850,20 +862,20 @@ function zhm_match_brackets {
 
   __zhm_handle_goto_selection $prev_cursor
 
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select_all {
   CURSOR=${#BUFFER}
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=$CURSOR
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_collapse_selection {
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$CURSOR
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_flip_selections {
@@ -873,13 +885,13 @@ function zhm_flip_selections {
     CURSOR=$ZHM_SELECTION_RIGHT
   fi
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_ensure_selections_forward {
   CURSOR=$ZHM_SELECTION_RIGHT
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_extend_to_line_bounds {
@@ -899,7 +911,7 @@ function zhm_extend_to_line_bounds {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_extend_line_below {
@@ -924,7 +936,7 @@ function zhm_extend_line_below {
   fi
   CURSOR=$ZHM_SELECTION_RIGHT
   __zhm_update_last_moved
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_normal {
@@ -936,7 +948,7 @@ function zhm_normal {
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
   __zhm_mode_normal
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_select {
@@ -957,7 +969,7 @@ function zhm_insert {
   __zhm_save_state_before_insert
   CURSOR=$ZHM_SELECTION_LEFT
   __zhm_mode_insert
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_insert_at_line_end {
@@ -985,7 +997,7 @@ function zhm_append {
   __zhm_save_state_before_insert
   CURSOR=$((ZHM_SELECTION_RIGHT + 1))
   __zhm_mode_insert
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_change {
@@ -1002,7 +1014,7 @@ function zhm_change {
   ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   CURSOR=$ZHM_SELECTION_LEFT
   __zhm_mode_insert
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_replace {
@@ -1038,7 +1050,7 @@ function zhm_delete {
   fi
 
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_undo {
@@ -1049,7 +1061,7 @@ function zhm_undo {
     ZHM_SELECTION_LEFT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
     ZHM_SELECTION_RIGHT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
     ZHM_HOOK_IKNOWWHATIMDOING=1
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -1061,7 +1073,7 @@ function zhm_redo {
     ZHM_SELECTION_LEFT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
     ZHM_SELECTION_RIGHT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
     ZHM_HOOK_IKNOWWHATIMDOING=1
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -1100,7 +1112,7 @@ function zhm_paste_after {
   fi
   __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
@@ -1125,7 +1137,7 @@ function zhm_paste_before {
   fi
 
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
   __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
@@ -1154,7 +1166,7 @@ function zhm_clipboard_paste_after {
 
   __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
@@ -1174,7 +1186,7 @@ function zhm_clipboard_paste_before {
 
   __zhm_update_last_moved
   __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
-  __zhm_update_mark
+  __zhm_update_region_highlight
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
@@ -1205,7 +1217,7 @@ function zhm_self_insert {
 
   ZHM_LAST_MOVED_X=$((ZHM_LAST_MOVED_X + 1))
 
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_insert_newline {
@@ -1221,7 +1233,7 @@ ${RBUFFER}"
 
   ZHM_LAST_MOVED_X=0
 
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_multiline {
@@ -1252,7 +1264,7 @@ function zhm_delete_char_backward {
       fi
     fi
 
-    __zhm_update_mark
+    __zhm_update_region_highlight
   fi
 }
 
@@ -1282,7 +1294,7 @@ function zhm_history_prev {
   HISTNO=$((HISTNO - 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_history_next {
@@ -1294,7 +1306,7 @@ function zhm_history_next {
   HISTNO=$((HISTNO + 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 function zhm_expand_or_complete {
@@ -1302,7 +1314,7 @@ function zhm_expand_or_complete {
   zle expand-or-complete
   ZHM_SELECTION_LEFT=$cursor_pos_before_expand
   ZHM_SELECTION_RIGHT=$CURSOR
-  __zhm_update_mark
+  __zhm_update_region_highlight
 }
 
 # ==============================================================================
@@ -1430,9 +1442,7 @@ function zhm_zle_line_pre_redraw {
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT < buffer_len ? ZHM_SELECTION_LEFT : buffer_len))
   ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
 
-  local region_prev_active=$REGION_ACTIVE
-  __zhm_update_mark
-  REGION_ACTIVE=$region_prev_active
+  __zhm_update_region_highlight
 
   ZHM_HOOK_IKNOWWHATIMDOING=0
   ZHM_PREV_CURSOR=$CURSOR
