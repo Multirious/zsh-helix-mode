@@ -107,7 +107,6 @@ function __zhm_update_region_highlight {
     "${region_highlight:#*memo=zhm_highlight}"
   )
   region_highlight+=( "$main_highlight" )
-  echo "$region_highlight" >> /tmp/zhm_log
 }
 
 function __zhm_update_editor_history {
