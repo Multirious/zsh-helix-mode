@@ -14,11 +14,6 @@ export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[0m\e[2 q\e]12;#F2CDCD\a}"
 # Reset then white vertical blinking cursor
 export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[0m\e[5 q\e]12;white\a}"
 
-# This config is provided by zle. The plugin uses this as the style for selection.
-if (( ! ${+zle_highlight} )); then
-  zle_highlight=(region:fg=white,bg=#45475A)
-fi
-
 # Uses the syntax from https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
 export ZHM_STYLE_SELECTION="fg=white,bg=#45475a"
 
