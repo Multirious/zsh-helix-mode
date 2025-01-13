@@ -10,7 +10,7 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 **Features**
 - Accurate Helix replication. No more switching muscle memory.
 - Helix's selection manipulation and movemnt.
-- Match, Goto, Insert, Append, Change, Replace.
+- Match, Goto, Insert, Append, Change, Delete, Replace.
 - Registers.
 - Yank-Paste. For both registers and clipboard.
 - Undo-Redo. And with selection history like Helix's.
@@ -135,11 +135,11 @@ otherwise it is empty.
 or `wl-paste --no-newline` if the `WAYLAND_DISPLAY` environment variable is found,<br/>
 otherwise it is empty.
 
-#### Keymaps
-
 Some keys are custom to this plugin and not presented in Helix.
 - `Alt-Enter` for enabling and disabling multiline mode for both Insert and Normal mode.
-- `Ctrl-p` and `Ctrl-n` in Normal mode for previous and next command histroy. Note that `j` and `k` is also supported.
+- `Ctrl-p` and `Ctrl-n` in Normal mode for previous and next command histroy. By default, `j` and `k` can change history too.
+
+The register `%` is changed to `pwd` instead of current file in Helix.
 
 ### Compatibility
 
