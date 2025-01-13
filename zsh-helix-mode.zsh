@@ -114,7 +114,7 @@ function __zhm_user_specified_register {
 
 function __zhm_update_region_highlight {
   region_highlight=(
-    "${region_highlight:#*memo=zhm_highlight}"
+    ${region_highlight:#*memo=zhm_highlight}
   )
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
