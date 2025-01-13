@@ -120,17 +120,17 @@ function __zhm_update_region_highlight {
     local left=$zhm_cursors_selection_left[$i]
     local right=$(( zhm_cursors_selection_right[i] + 1 ))
     local highlight="$left $right $ZHM_STYLE_SELECTION memo=zhm_highlight"
-    region_highlight+=( "$highlight" )
+    region_highlight+=("$highlight")
   done
+
   for i in {1..$#zhm_cursors_pos}; do
-    local cursor=$zhm_cursors_pos[$i]
-    local cursor_highlight
+    local cursor="$zhm_cursors_pos[$i]"
+    local cursor_right="$((cursor + 1))"
     if [[ $ZHM_MODE != select ]]; then
-      cursor_highlight="$cursor $((cursor + 1)) $ZHM_STYLE_OTHER_CURSOR memo=zhm_highlight"
+      region_highlight+=("$cursor $cursor_right $ZHM_STYLE_OTHER_CURSOR memo=zhm_highlight")
     else
-      cursor_highlight="$cursor $((cursor + 1)) $ZHM_STYLE_OTHER_CURSOR_SELECT memo=zhm_highlight"
+      region_highlight+=("$cursor $cursor_right $ZHM_STYLE_OTHER_CURSOR_SELECT memo=zhm_highlight")
     fi
-    region_highlight+=( "$cursor_highlight" )
   done
 }
 
@@ -182,8 +182,8 @@ function __zhm_goto {
   if (( cursor < 0 )); then
     cursor=0
   fi
-  if (( cursor > $#BUFFER )); then
-    cursor=$#BUFFER
+  if (( cursor > ${#BUFFER} )); then
+    cursor=${#BUFFER}
   fi
 
   if (( idx == ZHM_PRIMARY_CURSOR_IDX )); then
@@ -277,7 +277,7 @@ function zhm_move_up {
       __zhm_goto $i $((MBEGIN - 1))
       local cursor=$zhm_cursors_pos[$i]
       local lbuffer="${BUFFER:0:$cursor}"
-      local new_x
+      local new_x=
       if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
         new_x=$((cursor - MBEGIN))
       else
@@ -287,6 +287,9 @@ function zhm_move_up {
       if (( new_x > last_moved_x )); then
         __zhm_goto $i $((cursor - (new_x - last_moved_x)))
       fi
+    elif (( i == ZHM_PRIMARY_CURSOR_IDX )); then
+      zhm_history_prev
+      return
     fi
   done
   __zhm_update_region_highlight
@@ -300,7 +303,7 @@ function zhm_move_up_or_history_prev {
       __zhm_goto $i $((MBEGIN - 1))
       local cursor=$zhm_cursors_pos[$i]
       local lbuffer="${BUFFER:0:$cursor}"
-      local new_x
+      local new_x=
       if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
         new_x=$((cursor - MBEGIN))
       else
@@ -937,8 +940,9 @@ function zhm_match_brackets {
 
 function zhm_select_all {
   CURSOR=${#BUFFER}
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=$CURSOR
+  zhm_cursors_pos=($CURSOR)
+  zhm_cursors_selection_left=(0)
+  zhm_cursors_selection_right=($CURSOR)
   __zhm_update_region_highlight
 }
 
@@ -1213,6 +1217,8 @@ function zhm_paste_before {
 }
 
 function zhm_clipboard_yank {
+  local ZHM_SELECTION_LEFT=$zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX]
+  local ZHM_SELECTION_RIGHT=$zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]
   print "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
