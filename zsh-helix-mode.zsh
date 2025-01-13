@@ -104,7 +104,7 @@ function __zhm_user_specified_register {
 function __zhm_update_region_highlight {
   local main_highlight="$ZHM_SELECTION_LEFT $((ZHM_SELECTION_RIGHT + 1)) $ZHM_STYLE_SELECTION memo=zhm_highlight"
   region_highlight=(
-    "${region_highlight:#*memo=zhm_highlight}"
+    ${region_highlight:#*memo=zhm_highlight}
   )
   region_highlight+=( "$main_highlight" )
 }
