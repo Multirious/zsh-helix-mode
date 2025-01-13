@@ -222,6 +222,13 @@ function __zhm_trailing_goto {
     return
   fi
 
+  if (( cursor < 0 )); then
+    cursor=0
+  fi
+  if (( cursor > ${#BUFFER} )); then
+    cursor=${#BUFFER}
+  fi
+
   local skip=$3
   local left=$zhm_cursors_selection_left[$idx]
   local right=$zhm_cursors_selection_right[$idx]
@@ -230,6 +237,7 @@ function __zhm_trailing_goto {
   if (( idx == ZHM_PRIMARY_CURSOR_IDX )); then
     CURSOR=$cursor
   fi
+  zhm_cursors_pos[$idx]=$cursor
 
   if (( cursor > prev_cursor )); then
     zhm_cursors_selection_left[$idx]=$((prev_cursor + skip))
@@ -369,52 +377,44 @@ function zhm_move_down_or_history_next {
 }
 
 function zhm_move_next_word_start {
-  local substring="${BUFFER:$CURSOR}"
-  if [[ $substring =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]; then
-    local skip=0
-    local go=$((CURSOR + MEND - 1))
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ '^\w+\s*|^[^\w\s]+\s*|\s*' ]]; then
+      local skip=0
+      local right=$((cursor + MEND - 1))
 
-    if (( MBEGIN > 1)); then
-      skip=1
+      if (( $#MATCH == 1 )) \
+        && [[ ${rbuffer:1} =~ '^\w+\s*|^[^\w\s]+\s*|\s*' ]]
+      then
+        echo "skip" >> /tmp/zhm_log
+        skip=$((MBEGIN - 1))
+        right=$((cursor + MEND))
+      fi
+
+      __zhm_trailing_goto $i $right $skip
     fi
-
-    if (( MEND <= 1)) \
-      && [[ "${substring:1}" =~ '[a-zA-Z0-9_]+ *|[^a-zA-Z0-9_ ]+ *' ]]
-    then
-      go=$((go + MEND))
-      skip=1
-    fi
-
-    __zhm_trailing_goto $go $skip
-    __zhm_update_region_highlight
-  fi
+  done
+  __zhm_update_region_highlight
 }
 
 function zhm_move_prev_word_start {
-  local rev_buffer="$(echo "$BUFFER" | rev)"
-  local substring="${rev_buffer:$((-CURSOR - 1))}"
-  if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
-    local skip=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ '\w+ *$|[^a-zA-Z0-9_ ]+ *$' ]]; then
+      local skip=0
 
-    local go=$CURSOR
-    if (( go >= ${#BUFFER} )); then
-     go=$((go - 1))
-    fi
+      go=$((MBEGIN - 1))
+      if [[ "$lbuffer[$((MBEGIN - 1))]$lbuffer[$cursor]" =~ '^[a-zA-Z0-9_]$|^$' ]]; then
+        skip=1
+      fi
 
-    go=$((go - MEND + 1))
-    if (( MBEGIN > 1)); then
-      skip=1
+      __zhm_trailing_goto $i $go $skip
     fi
-    if (( MEND <= 1)) \
-      && [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]];
-    then
-      go=$((go - MEND))
-      skip=1
-    fi
-
-    __zhm_trailing_goto $go $skip
-    __zhm_update_region_highlight
-  fi
+  done
+  __zhm_update_region_highlight
 }
 
 function zhm_move_next_word_end {
