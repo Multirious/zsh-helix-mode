@@ -43,17 +43,20 @@ zhm_cursors_pos=(0)
 zhm_cursors_selection_left=(0)
 zhm_cursors_selection_right=(0)
 
-ZHM_BEFORRE_INSERT_PRIMARY_CURSOR_IDX=1
-zhm_before_insert_cursors_pos=(0)
-zhm_before_insert_cursors_selection_left=(0)
-zhm_before_insert_cursors_selection_right=(0)
-
 ZHM_CHANGES_HISTORY_IDX=1
 zhm_changes_history_buffer=("")
-zhm_changes_history_cursors_idx_starts=(1)
-zhm_changes_history_cursors_pos=(0)
-zhm_changes_history_cursors_selection_left=(0)
-zhm_changes_history_cursors_selection_right=(0)
+zhm_changes_history_cursors_idx_starts_pre=(1)
+zhm_changes_history_cursors_count_pre=(1)
+zhm_changes_history_cursors_pos_pre=(0)
+zhm_changes_history_cursors_selection_left_pre=(0)
+zhm_changes_history_cursors_selection_right_pre=(0)
+zhm_changes_history_primary_cursor_pre=(1)
+zhm_changes_history_cursors_idx_starts_post=(1)
+zhm_changes_history_cursors_count_post=(1)
+zhm_changes_history_cursors_pos_post=(0)
+zhm_changes_history_cursors_selection_left_post=(0)
+zhm_changes_history_cursors_selection_right_post=(0)
+zhm_changes_history_primary_cursor_post=(1)
 
 zhm_cursors_last_moved_x=(0)
 
@@ -134,24 +137,67 @@ function __zhm_update_region_highlight {
   done
 }
 
-function __zhm_update_editor_history {
-  # if [[ "$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 6))]" != "$1" ]]; then
-  #   if (( ${#zhm_editor_history} > ($ZHM_EDITOR_HISTORY_IDX * 7) )); then
-  #     local count=$(((${#zhm_editor_history} - ZHM_EDITOR_HISTORY_IDX * 7) - 1))
-  #     for i in {0..$count}; do
-  #       shift -p zhm_editor_history
-  #     done
-  #   fi
+function __zhm_update_changes_history_pre {
+  if (( ${#zhm_changes_history_buffer} > ZHM_CHANGES_HISTORY_IDX )); then
+    local keep=$((ZHM_CHANGES_HISTORY_IDX))
+    zhm_changes_history_buffer=("${(@)zhm_changes_history_buffer[1,$keep]}")
 
-  #   zhm_editor_history+=("$1")
-  #   zhm_editor_history+=($2)
-  #   zhm_editor_history+=($3)
-  #   zhm_editor_history+=($4)
-  #   zhm_editor_history+=($5)
-  #   zhm_editor_history+=($6)
-  #   zhm_editor_history+=($7)
-  #   ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
-  # fi
+    local idx=$((zhm_changes_history_cursors_idx_starts_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
+    zhm_changes_history_cursors_pos_pre=($zhm_changes_history_cursors_pos_pre[1,$idx])
+    zhm_changes_history_cursors_selection_left_pre=($zhm_changes_history_cursors_selection_left_pre[1,$idx])
+    zhm_changes_history_cursors_selection_right_pre=($zhm_changes_history_cursors_selection_right_pre[1,$idx])
+    zhm_changes_history_cursors_idx_starts_pre=($zhm_changes_history_cursors_idx_starts_pre[1,$keep])
+    zhm_changes_history_cursors_count_pre=($zhm_changes_history_cursors_count_pre[1,$keep])
+    zhm_changes_history_primary_cursor_pre=($zhm_changes_history_primary_cursor_post[1,$keep])
+
+    local idx=$((zhm_changes_history_cursors_idx_starts_post[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
+    zhm_changes_history_cursors_pos_post=($zhm_changes_history_cursors_pos_post[1,$idx])
+    zhm_changes_history_cursors_selection_left_post=($zhm_changes_history_cursors_selection_left_post[1,$idx])
+    zhm_changes_history_cursors_selection_right_post=($zhm_changes_history_cursors_selection_right_post[1,$idx])
+    zhm_changes_history_cursors_idx_starts_post=($zhm_changes_history_cursors_idx_starts_post[1,$keep])
+    zhm_changes_history_cursors_count_post=($zhm_changes_history_cursors_count_post[1,$keep])
+    zhm_changes_history_primary_cursor_post=($zhm_changes_history_primary_cursor_post[1,$keep])
+  fi
+  zhm_changes_history_cursors_idx_starts_pre+=(
+    $(( ${#zhm_changes_history_cursors_pos_pre} + 1 ))
+  )
+  zhm_changes_history_cursors_count_pre+=(
+    "${#zhm_cursors_pos}"
+  )
+  zhm_changes_history_cursors_pos_pre+=(
+    "${zhm_cursors_pos[@]}"
+  )
+  zhm_changes_history_cursors_selection_left_pre+=(
+    "${zhm_cursors_selection_left[@]}")
+  zhm_changes_history_cursors_selection_right_pre+=(
+    "${zhm_cursors_selection_right[@]}"
+  )
+  zhm_changes_history_primary_cursor_pre+=(
+    $ZHM_PRIMARY_CURSOR_IDX
+  )
+}
+
+function __zhm_update_changes_history_post {
+  zhm_changes_history_buffer+=("$BUFFER")
+  zhm_changes_history_cursors_idx_starts_post+=(
+    $(( ${#zhm_changes_history_cursors_pos_post} + 1 ))
+  )
+  zhm_changes_history_cursors_count_post+=(
+    "${#zhm_cursors_pos}"
+  )
+  zhm_changes_history_cursors_pos_post+=(
+    "${zhm_cursors_pos[@]}"
+  )
+  zhm_changes_history_cursors_selection_left_post+=(
+    "${zhm_cursors_selection_left[@]}"
+  )
+  zhm_changes_history_cursors_selection_right_post+=(
+    "${zhm_cursors_selection_right[@]}"
+  )
+  zhm_changes_history_primary_cursor_post+=(
+    $ZHM_PRIMARY_CURSOR_IDX
+  )
+  ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX + 1))
 }
 
 function __zhm_mode_normal {
@@ -1138,7 +1184,7 @@ function zhm_normal {
     done
     CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-    __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+    __zhm_update_changes_history_post
   fi
   __zhm_mode_normal
   __zhm_update_region_highlight
@@ -1153,20 +1199,12 @@ function zhm_select {
   fi
 }
 
-function __zhm_save_state_before_insert {
-  for i in {1..$#zhm_cursors_pos}; do
-    zhm_before_insert_cursors_pos[$i]=$zhm_cursors_pos[$i]
-    zhm_before_insert_cursors_selection_left[$i]=$zhm_cursors_selection_left[$i]
-    zhm_before_insert_cursors_selection_right[$i]=$zhm_cursors_selection_right[$i]
-  done
-}
-
 function zhm_insert {
-  __zhm_save_state_before_insert
   for i in {1..$#zhm_cursors_pos}; do
     zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_changes_history_pre
   __zhm_mode_insert
   __zhm_update_region_highlight
 }
@@ -1200,11 +1238,11 @@ function zhm_insert_at_line_start {
 }
 
 function zhm_append {
-  __zhm_save_state_before_insert
   for i in {1..$#zhm_cursors_pos}; do
     zhm_cursors_pos[$i]=$((zhm_cursors_selection_right[i] + 1))
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_changes_history_pre
   __zhm_mode_insert
   __zhm_update_region_highlight
 }
@@ -1219,7 +1257,6 @@ function zhm_change {
 
   __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
 
-  __zhm_save_state_before_insert
   BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
   ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
   CURSOR=$ZHM_SELECTION_LEFT
@@ -1241,51 +1278,80 @@ function zhm_replace {
 
 # not updated
 function zhm_delete {
-  local register
-  register=$(__zhm_user_specified_register)
-  if (( $? != 0 )); then
-    register="\""
-  fi
+  # local register
+  # register=$(__zhm_user_specified_register)
+  # if (( $? != 0 )); then
+  #   register="\""
+  # fi
 
-  __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+  # __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+  __zhm_update_changes_history_pre
 
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
+  local amount_deleted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$((zhm_cursors_pos[i] - amount_deleted))
+    local left=$((zhm_cursors_selection_left[$i] - amount_deleted))
+    local right=$((zhm_cursors_selection_right[$i] - amount_deleted))
 
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
-  ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-  CURSOR=$ZHM_SELECTION_LEFT
+    BUFFER="${BUFFER:0:$left}${BUFFER:$((right + 1))}"
+
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$left
+    zhm_cursors_pos[$i]=$left
+
+    amount_deleted=$((amount_deleted + right - left + 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
   fi
 
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_changes_history_post
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_undo {
-  if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
-    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
-    BUFFER="$zhm_editor_history[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 5))]"
-    ZHM_SELECTION_LEFT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 4))]"
-    ZHM_SELECTION_RIGHT="$zhm_editor_history[$(((ZHM_EDITOR_HISTORY_IDX + 1) * 7 - 3))]"
+  if (( ZHM_CHANGES_HISTORY_IDX > 1 )); then
+    ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX - 1))
+    BUFFER="$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
+    local idx=$zhm_changes_history_cursors_idx_starts_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
+    local count=$zhm_changes_history_cursors_count[$((ZHM_CHANGES_HISTORY_IDX + 1))]
+    zhm_cursors_pos=(
+      $zhm_changes_history_cursors_pos_pre[$idx,$((idx + count))]
+    )
+    zhm_cursors_selection_left=(
+      $zhm_changes_history_cursors_selection_left_pre[$idx,$((idx + count))]
+    )
+    zhm_cursors_selection_right=(
+      $zhm_changes_history_cursors_selection_right_pre[$idx,$((idx + count))]
+    )
+    zhm_cursors_last_moved_x=("${zhm_cursors_pos[@]}")
+    ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
+    CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
     ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_region_highlight
   fi
 }
 
-# not updated
 function zhm_redo {
-  if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#zhm_editor_history})); then
-    ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
-    BUFFER="$zhm_editor_history[$(($ZHM_EDITOR_HISTORY_IDX * 7 - 6))]"
-    CURSOR="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 2))]"
-    ZHM_SELECTION_LEFT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7 - 1))]"
-    ZHM_SELECTION_RIGHT="$zhm_editor_history[$((ZHM_EDITOR_HISTORY_IDX * 7))]"
+  if (( ZHM_CHANGES_HISTORY_IDX < ${#zhm_changes_history_buffer} )); then
+    ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX + 1))
+    BUFFER="$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
+    local idx=$zhm_changes_history_cursors_idx_starts_post[$ZHM_CHANGES_HISTORY_IDX]
+    local count=$zhm_changes_history_cursors_count[$ZHM_CHANGES_HISTORY_IDX]
+    zhm_cursors_pos=(
+      $zhm_changes_history_cursors_pos_post[$idx,$((idx + count))]
+    )
+    zhm_cursors_selection_left=(
+      $zhm_changes_history_cursors_selection_left_post[$idx,$((idx + count))]
+    )
+    zhm_cursors_selection_right=(
+      $zhm_changes_history_cursors_selection_right_post[$idx,$((idx + count))]
+    )
+    zhm_cursors_last_moved_x=("${zhm_cursors_pos[@]}")
+    ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_post[$ZHM_CHANGES_HISTORY_IDX]
+    CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
     ZHM_HOOK_IKNOWWHATIMDOING=1
     __zhm_update_region_highlight
   fi
@@ -1648,17 +1714,33 @@ zle -N zhm_expand_or_complete
 
 # ==============================================================================
 
-# not updated
 function zhm_precmd {
   zhm_cursors_pos=(0)
   zhm_cursors_selection_left=(0)
   zhm_cursors_selection_right=(0)
+  ZHM_PRIMARY_CURSOR_IDX=1
+
   ZHM_MULTILINE=0
-  zhm_editor_history=("" 0 0 0 0 0 0)
-  ZHM_EDITOR_HISTORY_IDX=1
+
+  ZHM_CHANGES_HISTORY_IDX=1
+  zhm_changes_history_buffer=("")
+  zhm_changes_history_cursors_idx_starts_pre=(1)
+  zhm_changes_history_cursors_count_pre=(1)
+  zhm_changes_history_cursors_pos_pre=(0)
+  zhm_changes_history_cursors_selection_left_pre=(0)
+  zhm_changes_history_cursors_selection_right_pre=(0)
+  zhm_changes_history_primary_cursor_pre=(1)
+  zhm_changes_history_cursors_idx_starts_post=(1)
+  zhm_changes_history_cursors_count_post=(1)
+  zhm_changes_history_cursors_pos_post=(0)
+  zhm_changes_history_cursors_selection_left_post=(0)
+  zhm_changes_history_cursors_selection_right_post=(0)
+  zhm_changes_history_primary_cursor_post=(1)
+
   case $ZHM_MODE in
     insert)
       printf "$ZHM_CURSOR_INSERT"
+      __zhm_update_changes_history_pre
       ;;
     normal)
       printf "$ZHM_CURSOR_NORMAL"
@@ -1667,7 +1749,6 @@ function zhm_precmd {
   zhm_registers["%"]="$(pwd)"
 }
 
-# not updated
 function zhm_preexec {
   printf "$ZHM_CURSOR_NORMAL"
   REGION_ACTIVE=0
