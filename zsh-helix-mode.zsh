@@ -204,9 +204,9 @@ function __zhm_goto {
     fi
   elif (( prev_cursor == right )); then
     if (( cursor >= left)); then
-      zhm_cursors_selection_right[$idx]=$((cursor + 1))
+      zhm_cursors_selection_right[$idx]=$cursor
     else
-      zhm_cursors_selection_right[$idx]=$((left + 1))
+      zhm_cursors_selection_right[$idx]=$left
       zhm_cursors_selection_left[$idx]=$cursor
     fi
   fi
