@@ -1249,17 +1249,33 @@ function zhm_append {
 
 # not updated
 function zhm_change {
-  local register
-  register=$(__zhm_user_specified_register)
-  if (( $? != 0 )); then
-    register="\""
-  fi
+  # local register
+  # register=$(__zhm_user_specified_register)
+  # if (( $? != 0 )); then
+  #   register="\""
+  # fi
 
-  __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+  # __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
 
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
-  ZHM_SELECTION_RIGHT=$ZHM_SELECTION_LEFT
-  CURSOR=$ZHM_SELECTION_LEFT
+  __zhm_update_changes_history_pre
+
+  local amount_deleted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$((zhm_cursors_pos[i] - amount_deleted))
+    local left=$((zhm_cursors_selection_left[i] - amount_deleted))
+    local right=$((zhm_cursors_selection_right[i] - amount_deleted))
+
+    BUFFER="${BUFFER:0:$left}${BUFFER:$((right + 1))}"
+
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$left
+    zhm_cursors_pos[$i]=$left
+
+    amount_deleted=$((amount_deleted + right - left + 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_pre
   __zhm_mode_insert
   __zhm_update_region_highlight
 }
@@ -1290,8 +1306,8 @@ function zhm_delete {
   local amount_deleted=0
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$((zhm_cursors_pos[i] - amount_deleted))
-    local left=$((zhm_cursors_selection_left[$i] - amount_deleted))
-    local right=$((zhm_cursors_selection_right[$i] - amount_deleted))
+    local left=$((zhm_cursors_selection_left[i] - amount_deleted))
+    local right=$((zhm_cursors_selection_right[i] - amount_deleted))
 
     BUFFER="${BUFFER:0:$left}${BUFFER:$((right + 1))}"
 
