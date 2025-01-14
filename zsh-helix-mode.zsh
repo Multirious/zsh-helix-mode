@@ -487,78 +487,104 @@ function zhm_move_next_long_word_end {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_find_till_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $RBUFFER =~ ".?$char?[^$char]*" ]]; then
-    __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
-  fi
-
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ ".?$char?[^$char]*" ]]; then
+      __zhm_trailing_goto $i $((cursor + MEND - 1)) 0
+    fi
+  done
   ZHM_LAST_MOTION="find_till"
   ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_find_next_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $RBUFFER =~ "$char?[^$char]*$char" ]]; then
-    __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
-  fi
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ "$char?[^$char]*$char" ]]; then
+      __zhm_trailing_goto $i $((cursor + MEND - 1)) 0
+    fi
+  done
   ZHM_LAST_MOTION="find_next"
   ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_till_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $LBUFFER =~ "[^$char]*$char?$" ]]; then
-    __zhm_trailing_goto $((MBEGIN - 1)) 0
-  fi
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ "[^$char]*$char?$" ]]; then
+      __zhm_trailing_goto $i $((MBEGIN - 1)) 0
+    fi
+  done
   ZHM_LAST_MOTION="till_prev"
   ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_find_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
-  if [[ $LBUFFER =~ "${char}[^${char}]*$" ]]; then
-    __zhm_trailing_goto $((MBEGIN - 1)) 0
-  fi
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ "${char}[^${char}]*$" ]]; then
+      __zhm_trailing_goto $i $((MBEGIN - 1)) 0
+    fi
+  done
   ZHM_LAST_MOTION="find_prev"
   ZHM_LAST_MOTION_CHAR="$char"
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_repeat_last_motion {
   local char="$ZHM_LAST_MOTION_CHAR"
   case "$ZHM_LAST_MOTION" in
     "find_till")
-      if [[ $RBUFFER =~ ".?$char?[^$char]*" ]]; then
-        __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
-      fi
+      for i in {1..$#zhm_cursors_pos}; do
+        local cursor=$zhm_cursors_pos[$i]
+        local rbuffer="${BUFFER:$cursor}"
+        if [[ $rbuffer =~ ".?$char?[^$char]*" ]]; then
+          __zhm_trailing_goto $i $((CURSOR + MEND - 1)) 0
+        fi
+      done
       ;;
     "find_next")
-      if [[ $RBUFFER =~ "$char?[^$char]*$char" ]]; then
-        __zhm_trailing_goto $((CURSOR + MEND - 1)) 0
-      fi
+      for i in {1..$#zhm_cursors_pos}; do
+        local cursor=$zhm_cursors_pos[$i]
+        local rbuffer="${BUFFER:$cursor}"
+        if [[ $rbuffer =~ "$char?[^$char]*$char" ]]; then
+          __zhm_trailing_goto $i $((CURSOR + MEND - 1)) 0
+        fi
+      done
       ;;
     "till_prev")
-      if [[ $LBUFFER =~ "[^$char]*$char?$" ]]; then
-        __zhm_trailing_goto $((MBEGIN - 1)) 0
-      fi
+      for i in {1..$#zhm_cursors_pos}; do
+        local cursor=$zhm_cursors_pos[$i]
+        local lbuffer="${BUFFER:0:$cursor}"
+        if [[ $lbuffer =~ "[^$char]*$char?$" ]]; then
+          __zhm_trailing_goto $i $((MBEGIN - 1)) 0
+        fi
+      done
       ;;
     "find_prev")
-      if [[ $LBUFFER =~ "${char}[^${char}]*$" ]]; then
-        __zhm_trailing_goto $((MBEGIN - 1)) 0
-      fi
+      for i in {1..$#zhm_cursors_pos}; do
+        local cursor=$zhm_cursors_pos[$i]
+        local lbuffer="${BUFFER:0:$cursor}"
+        if [[ $lbuffer =~ "${char}[^${char}]*$" ]]; then
+          __zhm_trailing_goto $i $((MBEGIN - 1)) 0
+        fi
+      done
       ;;    
   esac
   __zhm_update_region_highlight
