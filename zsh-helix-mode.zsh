@@ -590,45 +590,58 @@ function zhm_repeat_last_motion {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_goto_first_line {
-  __zhm_goto 0
+  for i in {1..$#zhm_cursors_pos}; do
+    __zhm_goto $i 0
+  done
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_goto_last_line {
-  CURSOR=${#BUFFER}
-  if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
-    __zhm_goto $((MBEGIN - 1))
+  if [[ $BUFFER =~ $'[^\n]*$' ]]; then
+    for i in {1..$#zhm_cursors_pos}; do
+      __zhm_goto $i $((MBEGIN - 1))
+    done
   fi
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_goto_line_start {
-  if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
-    __zhm_goto $((MBEGIN - 1))
-  fi
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_goto_line_end {
-  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
-    __zhm_goto $((CURSOR + MEND - 1))
-  fi
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_goto_line_first_nonwhitespace {
-  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
-    local line="${BUFFER:0:$((CURSOR + MEND))}"
-    if [[ $line =~ $'[^\n ]*$' ]]; then
-      __zhm_goto $((MBEGIN - 1))
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
+      __zhm_goto $i $((MBEGIN - 1))
     fi
-  fi
+  done
+  __zhm_update_region_highlight
+}
+
+function zhm_goto_line_end {
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ $'^[^\n]+' ]]; then
+      __zhm_goto $i $((cursor + MEND - 1))
+    elif [[ "${BUFFER[$cursor,$((cursor + 1))]}" != $'\n\n' ]]; then
+      __zhm_goto $i $((cursor - 1))
+    fi
+  done
+  __zhm_update_region_highlight
+}
+
+function zhm_goto_line_first_nonwhitespace {
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
+      local line_start=$((MBEGIN - 1))
+      local line="${BUFFER:$line_start}"
+      if [[ $line =~ '^ *' ]]; then
+        __zhm_goto $i $((line_start + MEND))
+      fi
+    fi
+  done
   __zhm_update_region_highlight
 }
 
