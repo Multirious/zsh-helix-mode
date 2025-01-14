@@ -1414,19 +1414,24 @@ function zhm_insert_register {
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
 }
 
-# not updated
 function zhm_self_insert {
-  local prev_cursor=$CURSOR
+  local char="${KEYS}"
+  local inserted_count=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local prev_cursor=$zhm_cursors_pos[$i]
 
-  zle .self-insert
+    BUFFER="${BUFFER:0:$prev_cursor}${char}${BUFFER:$prev_cursor}"
 
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + 1))
-  fi
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
+    zhm_cursors_pos[$i]=$((prev_cursor + 1))
+    local left=$zhm_cursors_selection_left[$i]
+    if (( prev_cursor == left )); then
+      zhm_cursors_selection_left[$i]=$((left + 1))
+    fi
+    zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[$i] + 1))
 
-  ZHM_LAST_MOVED_X=$((ZHM_LAST_MOVED_X + 1))
-
+    zhm_cursors_last_moved_x[$i]=$((prev_cursor + 1))
+    inserted_count=$((inserted_count + 1))
+  done
   __zhm_update_region_highlight
 }
 
