@@ -1130,9 +1130,13 @@ function zhm_extend_line_below {
 # not updated
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
-    if (( CURSOR > ZHM_SELECTION_RIGHT )); then
-      CURSOR=$((CURSOR - 1))
-    fi
+    for i in {1..$#zhm_cursors_pos}; do
+      local cursor=$zhm_cursors_pos[$i]
+      if (( cursor > zhm_cursors_selection_right[i] )); then
+        zhm_cursors_pos[$i]=$((cursor - 1))
+      fi
+    done
+    CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
     __zhm_update_editor_history "$BUFFER" $ZHM_BEFORE_INSERT_CURSOR $ZHM_BEFORE_INSERT_SELECTION_LEFT $ZHM_BEFORE_INSERT_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   fi
@@ -1149,48 +1153,58 @@ function zhm_select {
   fi
 }
 
-# not updated
 function __zhm_save_state_before_insert {
-  ZHM_BEFORE_INSERT_CURSOR=$CURSOR
-  ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
-  ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
+  for i in {1..$#zhm_cursors_pos}; do
+    zhm_before_insert_cursors_pos[$i]=$zhm_cursors_pos[$i]
+    zhm_before_insert_cursors_selection_left[$i]=$zhm_cursors_selection_left[$i]
+    zhm_before_insert_cursors_selection_right[$i]=$zhm_cursors_selection_right[$i]
+  done
 }
 
-# not updated
 function zhm_insert {
   __zhm_save_state_before_insert
-  CURSOR=$ZHM_SELECTION_LEFT
+  for i in {1..$#zhm_cursors_pos}; do
+    zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_mode_insert
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_insert_at_line_end {
-  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
-    __zhm_goto $((CURSOR + MEND))
-  fi
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$CURSOR
-  zhm_insert
-}
-
-# not updated
-function zhm_insert_at_line_start {
-  if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
-    local line="${BUFFER:0:$((CURSOR + MEND))}"
-    if [[ $line =~ $'[^\n ]*$' ]]; then
-      CURSOR=$((MBEGIN - 1))
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ $'^[^\n]+' ]]; then
+      zhm_cursors_pos[$i]=$((cursor + MEND))
+    elif [[ "${BUFFER[$cursor,$((cursor + 1))]}" != $'\n\n' ]]; then
+      zhm_cursors_pos[$i]=$((cursor))
     fi
-  fi
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$CURSOR
+    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
+    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+  done
   zhm_insert
 }
 
-# not updated
+function zhm_insert_at_line_start {
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$cursor}"
+    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
+      zhm_cursors_pos[$i]=$((MBEGIN - 1))
+    fi
+    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
+    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+  done
+  zhm_insert
+}
+
 function zhm_append {
   __zhm_save_state_before_insert
-  CURSOR=$((ZHM_SELECTION_RIGHT + 1))
+  for i in {1..$#zhm_cursors_pos}; do
+    zhm_cursors_pos[$i]=$((zhm_cursors_selection_right[i] + 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_mode_insert
   __zhm_update_region_highlight
 }
@@ -1419,36 +1433,48 @@ function zhm_self_insert {
   local inserted_count=0
   for i in {1..$#zhm_cursors_pos}; do
     local prev_cursor=$zhm_cursors_pos[$i]
+    local cursor=$((prev_cursor + inserted_count))
 
-    BUFFER="${BUFFER:0:$prev_cursor}${char}${BUFFER:$prev_cursor}"
+    BUFFER="${BUFFER:0:$cursor}${char}${BUFFER:$cursor}"
 
-    zhm_cursors_pos[$i]=$((prev_cursor + 1))
+    zhm_cursors_pos[$i]=$((cursor + 1))
     local left=$zhm_cursors_selection_left[$i]
     if (( prev_cursor == left )); then
-      zhm_cursors_selection_left[$i]=$((left + 1))
+      zhm_cursors_selection_left[$i]=$((left + inserted_count + 1))
+    else
+      zhm_cursors_selection_left[$i]=$((left + inserted_count))
     fi
-    zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[$i] + 1))
+    zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[$i] + inserted_count + 1))
 
-    zhm_cursors_last_moved_x[$i]=$((prev_cursor + 1))
+    zhm_cursors_last_moved_x[$i]=$((cursor + 1))
     inserted_count=$((inserted_count + 1))
   done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_insert_newline {
-  local prev_cursor=$CURSOR
-  # newline lol
-  BUFFER="${LBUFFER}
-${RBUFFER}"
-  CURSOR=$((CURSOR + 1))
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + 1))
-  fi
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + 1))
+  local inserted_count=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local prev_cursor=$zhm_cursors_pos[$i]
+    local cursor=$((prev_cursor + inserted_count))
 
-  ZHM_LAST_MOVED_X=0
+    BUFFER="${BUFFER:0:$cursor}
+${BUFFER:$cursor}"
 
+    zhm_cursors_pos[$i]=$((cursor + 1))
+    if (( i == ZHM_PRIMARY_CURSOR_IDX )); then
+      CURSOR=$((cursor + 1))
+    fi
+    local left=$zhm_cursors_selection_left[$i]
+    if (( prev_cursor == left )); then
+      zhm_cursors_selection_left[$i]=$((left + inserted_count + 1))
+    fi
+    zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[$i] + inserted_count + 1))
+
+    zhm_cursors_last_moved_x[$i]=$((cursor + 1))
+    inserted_count=$((inserted_count + 1))
+  done
   __zhm_update_region_highlight
 }
 
@@ -1464,26 +1490,33 @@ function zhm_multiline {
   fi
 }
 
-# not updated
 function zhm_delete_char_backward {
-  local prev_cursor=$CURSOR
-  zle backward-delete-char
+  local removed_count=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local prev_cursor=$cursor
+    cursor=$((cursor - removed_count))
 
-  if ((CURSOR > 0)); then
-    if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-      ZHM_SELECTION_LEFT=$(($ZHM_SELECTION_LEFT - 1))
-      ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
-      ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT > 0 ? ZHM_SELECTION_LEFT : 0))
-      ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT > 0 ? ZHM_SELECTION_RIGHT : 0))
-    else
-      ZHM_SELECTION_RIGHT=$(($ZHM_SELECTION_RIGHT - 1))
-      if (( ZHM_SELECTION_RIGHT < ZHM_SELECTION_LEFT )); then
-        ZHM_SELECTION_LEFT=$ZHM_SELECTION_RIGHT
+    if ((cursor > 0)); then
+      BUFFER="${BUFFER:0:$((cursor - 1))}${BUFFER:$cursor}"
+
+      zhm_cursors_pos[$i]=$((cursor - 1))
+
+      if (( prev_cursor == zhm_cursors_selection_left[i] )); then
+        zhm_cursors_selection_left[$i]=$((zhm_cursors_selection_left[i] - 1))
+        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - 1))
+      else
+        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - 1))
+        if (( zhm_cursors_selection_right[i] < zhm_cursors_selection_left[i] )); then
+          zhm_cursors_selection_left[$i]=$zhm_cursors_selection_right[$i]
+        fi
       fi
+      removed_count=$((removed_count + 1))
     fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-    __zhm_update_region_highlight
-  fi
+  __zhm_update_region_highlight
 }
 
 # not updated
