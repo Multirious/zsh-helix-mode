@@ -307,6 +307,50 @@ function __zhm_update_last_moved {
 
 }
 
+function __zhm_merge_cursors {
+  if (( ${#zhm_cursors_pos} <= 1 )); then
+    return
+  fi
+  local i=0
+  while true; do
+    i=$((i + 1))
+    if (( (i + 1) > ${#zhm_cursors_pos} )); then
+      break
+    fi
+
+    local i_cursor=$zhm_cursors_pos[$i]
+    local i_left=$zhm_cursors_selection_left[$i]
+    local i_right=$zhm_cursors_selection_right[$i]
+
+    local j=$i
+    while true; do
+      j=$((j + 1))
+      if (( j > ${#zhm_cursors_pos} )); then
+        break
+      fi
+
+      local j_left=$zhm_cursors_selection_left[$j]
+      local j_right=$zhm_cursors_selection_right[$j]
+
+      if (( !(i_right < j_left || i_left > j_right) )); then
+        local new_left=$((i_left > j_left ? j_left : i_left))
+        local new_right=$((i_right > j_right ? i_right : j_right))
+        local new_cursor=$((i_cursor == i_right ? new_right : new_left))
+
+        zhm_cursors_pos[$i]=$new_cursor
+        zhm_cursors_selection_left[$i]=$new_left
+        zhm_cursors_selection_right[$i]=$new_right
+        zhm_cursors_pos[$j]=()
+        zhm_cursors_selection_left[$j]=()
+        zhm_cursors_selection_right[$j]=()
+
+        j=$((j - 1))
+        i=$((i - 1))
+      fi
+    done
+  done
+}
+
 function zhm_move_right {
   for i in {1..$#zhm_cursors_pos}; do
     __zhm_goto $i $((zhm_cursors_pos[i] + 1))
@@ -1173,7 +1217,10 @@ function zhm_extend_line_below {
   __zhm_update_region_highlight
 }
 
-# not updated
+function zhm_copy_selection_on_next_line {
+  
+}
+
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
     for i in {1..$#zhm_cursors_pos}; do
@@ -1689,6 +1736,7 @@ zle -N zhm_select_long_word_inner
 zle -N zhm_select_long_word_around
 zle -N zhm_select_surround_pair_inner
 zle -N zhm_select_surround_pair_around
+zle -N zhm_copy_selection_on_next_line
 
 zle -N zhm_select_all
 zle -N zhm_collapse_selection
@@ -1814,11 +1862,37 @@ function zhm_zle_line_pre_redraw {
     zhm_cursors_selection_right[$i]=$((right > 0 ? right: 0))
   done
 
+  __zhm_merge_cursors
   __zhm_update_region_highlight
 
   ZHM_HOOK_IKNOWWHATIMDOING=0
   ZHM_PREV_CURSOR=$CURSOR
   ZHM_PREV_MODE=$ZHM_MODE
+
+  echo "" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "history $ZHM_CHANGES_HISTORY_IDX" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "pre  start $zhm_changes_history_cursors_idx_starts_pre" >> /tmp/zhm_log
+  echo "pre  count $zhm_changes_history_cursors_count_pre" >> /tmp/zhm_log
+  echo "pre  pos   $zhm_changes_history_cursors_pos_pre" >> /tmp/zhm_log
+  echo "pre  left  $zhm_changes_history_cursors_selection_left_pre" >> /tmp/zhm_log
+  echo "pre  right $zhm_changes_history_cursors_selection_right_pre" >> /tmp/zhm_log
+  echo "pre  prim  $zhm_changes_history_primary_cursor_pre" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "post start $zhm_changes_history_cursors_idx_starts_post" >> /tmp/zhm_log
+  echo "post count $zhm_changes_history_cursors_count_post" >> /tmp/zhm_log
+  echo "post pos   $zhm_changes_history_cursors_pos_post" >> /tmp/zhm_log
+  echo "post left  $zhm_changes_history_cursors_selection_left_post" >> /tmp/zhm_log
+  echo "post right $zhm_changes_history_cursors_selection_right_post" >> /tmp/zhm_log
+  echo "post prim  $zhm_changes_history_primary_cursor_post" >> /tmp/zhm_log
+  echo "" >> /tmp/zhm_log
+  echo "curr pos   $zhm_cursors_pos" >> /tmp/zhm_log
+  echo "curr left  $zhm_cursors_selection_left" >> /tmp/zhm_log
+  echo "curr right $zhm_cursors_selection_right" >> /tmp/zhm_log
 }
 
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
@@ -1875,6 +1949,7 @@ bindkey -M hxnor "^[;" zhm_flip_selections
 bindkey -M hxnor "^[:" zhm_ensure_selections_forward
 bindkey -M hxnor x zhm_extend_line_below
 bindkey -M hxnor X zhm_extend_to_line_bounds
+bindkey -M hxnor C zhm_copy_selection_on_next_line
 
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins "^[" zhm_normal
