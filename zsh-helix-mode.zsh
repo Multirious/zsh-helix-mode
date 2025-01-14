@@ -378,61 +378,113 @@ function zhm_move_next_word_start {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
     local rbuffer="${BUFFER:$cursor}"
-    if [[ $rbuffer =~ '^\w+\s*|^[^\w\s]+\s*|\s*' ]]; then
-      local skip=0
-      local right=$((cursor + MEND - 1))
-
-      if (( $#MATCH == 1 )) \
-        && [[ ${rbuffer:1} =~ '^\w+\s*|^[^\w\s]+\s*|\s*' ]]
-      then
-        skip=MBEGIN
-        right=$((cursor + MEND))
+    if [[ $rbuffer =~ '^\n*(\w+[^\S\n]*|[^\w\s]+[^\S\n]*|[^\S\n]+)' ]]; then
+      local skip=$((mbegin[1] - 1))
+      local go=$((cursor + mend[1] - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${rbuffer:1} =~ '^\n*(\w+[^\S\n]*|[^\w\s]+[^\S\n]*|[^\S\n]+)' ]]; then
+        skip=$((mbegin[1]))
+        go=$((cursor + mend[1]))
       fi
-
-      __zhm_trailing_goto $i $right $skip
-    fi
-  done
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_move_prev_word_start {
-  for i in {1..$#zhm_cursors_pos}; do
-    local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ '\w+ *$|[^a-zA-Z0-9_ ]+ *$' ]]; then
-      local skip=0
-
-      go=$((MBEGIN - 1))
-      if [[ "$lbuffer[$((MBEGIN - 1))]$lbuffer[$cursor]" =~ '^[a-zA-Z0-9_]$|^$' ]]; then
-        skip=1
-      fi
-
       __zhm_trailing_goto $i $go $skip
     fi
   done
   __zhm_update_region_highlight
 }
 
-# not updated
-function zhm_move_next_word_end {
-  local substring="${BUFFER:$CURSOR}"
-  if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
-    local skip=0
-    local go=$((CURSOR + MEND - 1))
-    if (( MBEGIN > 1)); then
-      skip=1
+function zhm_move_prev_word_start {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$((cursor + 1))}"
+    if [[ $lbuffer =~ '(\w+[^\S\n]*|[^\w\s]+[^\S\n]*|[^\S\n]+)\n*$' ]]; then
+      local skip=$((${#lbuffer} - mend[1]))
+      local go=$((mbegin - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${lbuffer:0:-1} =~ '(\w+[^\S\n]*|[^\w\s]+[^\S\n]*|[^\S\n]+)\n*$' ]]; then
+        skip=$((${#lbuffer} - mend[1]))
+        go=$((mbegin - 1))
+      fi
+      __zhm_trailing_goto $i $go $skip
     fi
-    if (( MEND <= 1)) \
-      && [[ "${substring:1}" =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]
-    then
-      go=$((go + MEND))
-      skip=1
-    fi
+  done
+  __zhm_update_region_highlight
+}
 
-    __zhm_trailing_goto $go $skip
-    __zhm_update_region_highlight
-  fi
+function zhm_move_next_word_end {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ '^\n*([^\S\n]*\w+|[^\S\n]*[^\w\s]+|[^\S\n]+)' ]]; then
+      local skip=$((mbegin[1] - 1))
+      local go=$((cursor + mend[1] - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${rbuffer:1} =~ '^\n*([^\S\n]*\w+|[^\S\n]*[^\w\s]+|[^\S\n]+)' ]]; then
+        skip=$((mbegin[1]))
+        go=$((cursor + mend[1]))
+      fi
+      __zhm_trailing_goto $i $go $skip
+    fi
+  done
+  __zhm_update_region_highlight
+}
+
+function zhm_move_next_long_word_start {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ '^\n*(\S+[^\S\n]*|[^\S\n]+)' ]]; then
+      local skip=$((mbegin[1] - 1))
+      local go=$((cursor + mend[1] - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${rbuffer:1} =~ '^\n*(\S+[^\S\n]*|[^\S\n]+)' ]]; then
+        skip=$((mbegin[1]))
+        go=$((cursor + mend[1]))
+      fi
+      __zhm_trailing_goto $i $go $skip
+    fi
+  done
+  __zhm_update_region_highlight
+}
+
+function zhm_move_prev_long_word_start {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local lbuffer="${BUFFER:0:$((cursor + 1))}"
+    if [[ $lbuffer =~ '(\S+[^\S\n]*|[^\S\n]+)\n*$' ]]; then
+      local skip=$((${#lbuffer} - mend[1]))
+      local go=$((mbegin - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${lbuffer:0:-1} =~ '(\S+[^\S\n]*|[^\S\n]+)\n*$' ]]; then
+        skip=$((${#lbuffer} - mend[1]))
+        go=$((mbegin - 1))
+      fi
+      __zhm_trailing_goto $i $go $skip
+    fi
+  done
+  __zhm_update_region_highlight
+}
+
+function zhm_move_next_long_word_end {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local rbuffer="${BUFFER:$cursor}"
+    if [[ $rbuffer =~ '^\n*([^\S\n]*\S+|[^\S\n]+)' ]]; then
+      local skip=$((mbegin[1] - 1))
+      local go=$((cursor + mend[1] - 1))
+      if (( ${#match[1]} == 1 )) \
+        && [[ ${rbuffer:1} =~ '^\n*([^\S\n]*\S+|[^\S\n]+)' ]]; then
+        skip=$((mbegin[1]))
+        go=$((cursor + mend[1]))
+      fi
+      __zhm_trailing_goto $i $go $skip
+    fi
+  done
+  __zhm_update_region_highlight
 }
 
 # not updated
@@ -1461,6 +1513,9 @@ zle -N zhm_repeat_last_motion
 zle -N zhm_move_next_word_start
 zle -N zhm_move_prev_word_start
 zle -N zhm_move_next_word_end
+zle -N zhm_move_next_long_word_start
+zle -N zhm_move_prev_long_word_start
+zle -N zhm_move_next_long_word_end
 zle -N zhm_goto_first_line
 zle -N zhm_goto_last_line
 zle -N zhm_goto_line_start
@@ -1611,6 +1666,9 @@ bindkey -M hxnor j zhm_move_down_or_history_next
 bindkey -M hxnor w zhm_move_next_word_start
 bindkey -M hxnor b zhm_move_prev_word_start
 bindkey -M hxnor e zhm_move_next_word_end
+bindkey -M hxnor W zhm_move_next_long_word_start
+bindkey -M hxnor B zhm_move_prev_long_word_start
+bindkey -M hxnor E zhm_move_next_long_word_end
 for char in {" ".."~"}; do
   bindkey -M hxnor "t$char" zhm_find_till_char
   bindkey -M hxnor "f$char" zhm_find_next_char
