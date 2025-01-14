@@ -295,9 +295,6 @@ function zhm_move_up {
       if (( new_x > last_moved_x )); then
         __zhm_goto $i $((cursor - (new_x - last_moved_x)))
       fi
-    elif (( i == ZHM_PRIMARY_CURSOR_IDX )); then
-      zhm_history_prev
-      return
     fi
   done
   __zhm_update_region_highlight
@@ -388,8 +385,7 @@ function zhm_move_next_word_start {
       if (( $#MATCH == 1 )) \
         && [[ ${rbuffer:1} =~ '^\w+\s*|^[^\w\s]+\s*|\s*' ]]
       then
-        echo "skip" >> /tmp/zhm_log
-        skip=$((MBEGIN - 1))
+        skip=MBEGIN
         right=$((cursor + MEND))
       fi
 
@@ -399,6 +395,7 @@ function zhm_move_next_word_start {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_move_prev_word_start {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
@@ -417,6 +414,7 @@ function zhm_move_prev_word_start {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_move_next_word_end {
   local substring="${BUFFER:$CURSOR}"
   if [[ $substring =~ ' *[a-zA-Z0-9_]+| *[^a-zA-Z0-9_ ]+| *' ]]; then
@@ -437,6 +435,7 @@ function zhm_move_next_word_end {
   fi
 }
 
+# not updated
 function zhm_find_till_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
@@ -449,6 +448,7 @@ function zhm_find_till_char {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_find_next_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
@@ -460,6 +460,7 @@ function zhm_find_next_char {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_till_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
@@ -471,6 +472,7 @@ function zhm_till_prev_char {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_find_prev_char {
   local char="${KEYS:1}"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
@@ -482,6 +484,7 @@ function zhm_find_prev_char {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_repeat_last_motion {
   local char="$ZHM_LAST_MOTION_CHAR"
   case "$ZHM_LAST_MOTION" in
@@ -509,11 +512,13 @@ function zhm_repeat_last_motion {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_goto_first_line {
   __zhm_goto 0
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_goto_last_line {
   CURSOR=${#BUFFER}
   if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
@@ -522,6 +527,7 @@ function zhm_goto_last_line {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_goto_line_start {
   if [[ $LBUFFER =~ $'[^\n]*$' ]]; then
     __zhm_goto $((MBEGIN - 1))
@@ -529,6 +535,7 @@ function zhm_goto_line_start {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_goto_line_end {
   if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
     __zhm_goto $((CURSOR + MEND - 1))
@@ -536,6 +543,7 @@ function zhm_goto_line_end {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_goto_line_first_nonwhitespace {
   if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
     local line="${BUFFER:0:$((CURSOR + MEND))}"
@@ -546,6 +554,7 @@ function zhm_goto_line_first_nonwhitespace {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_surround_add {
   local char="${KEYS:2}"
   local left
@@ -593,6 +602,7 @@ function zhm_surround_add {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_word_inner {
   if (( CURSOR == ${#BUFFER} )); then
     ZHM_SELECTION_LEFT=$CURSOR
@@ -630,6 +640,7 @@ function zhm_select_word_inner {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_word_around {
   if (( CURSOR == ${#BUFFER} )); then
     ZHM_SELECTION_LEFT=$CURSOR
@@ -667,6 +678,7 @@ function zhm_select_word_around {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_long_word_inner {
   local word_start
   if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ '[^ ]+ ?$' ]]; then
@@ -697,6 +709,7 @@ function zhm_select_long_word_inner {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_long_word_around {
   local word_start
   if [[ "${BUFFER:0:$((CURSOR + 1))}" =~ ' *[^ ]+ ?$' ]]; then
@@ -727,6 +740,7 @@ function zhm_select_long_word_around {
   __zhm_update_region_highlight
 }
 
+# not updated
 function __zhm_find_surround_pair {
   local left_char="$1"
   local right_char="$2"
@@ -773,6 +787,7 @@ function __zhm_find_surround_pair {
   done
 }
 
+# not updated
 function zhm_select_surround_pair_around {
   local char="${KEYS:2}"
   local left
@@ -828,6 +843,7 @@ function zhm_select_surround_pair_around {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_surround_pair_inner {
   local char="${KEYS:2}"
   local left
@@ -883,6 +899,7 @@ function zhm_select_surround_pair_inner {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_match_brackets {
   local prev_cursor=$CURSOR
   local char="${BUFFER[$((CURSOR + 1))]}"
@@ -938,6 +955,7 @@ function zhm_match_brackets {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select_all {
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -946,12 +964,14 @@ function zhm_select_all {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_collapse_selection {
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$CURSOR
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_flip_selections {
   if (( CURSOR == ZHM_SELECTION_RIGHT )); then
     CURSOR=$ZHM_SELECTION_LEFT
@@ -962,12 +982,14 @@ function zhm_flip_selections {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_ensure_selections_forward {
   CURSOR=$ZHM_SELECTION_RIGHT
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_extend_to_line_bounds {
   local prev_cursor=$CURSOR
   local prev_right=$ZHM_SELECTION_RIGHT
@@ -988,6 +1010,7 @@ function zhm_extend_to_line_bounds {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_extend_line_below {
   if [[ "$BUFFER[$((ZHM_SELECTION_LEFT + 1))]" == $'\n' ]]; then
     if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
@@ -1013,6 +1036,7 @@ function zhm_extend_line_below {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
     if (( CURSOR > ZHM_SELECTION_RIGHT )); then
@@ -1025,6 +1049,7 @@ function zhm_normal {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_select {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
@@ -1033,12 +1058,14 @@ function zhm_select {
   fi
 }
 
+# not updated
 function __zhm_save_state_before_insert {
   ZHM_BEFORE_INSERT_CURSOR=$CURSOR
   ZHM_BEFORE_INSERT_SELECTION_LEFT=$ZHM_SELECTION_LEFT
   ZHM_BEFORE_INSERT_SELECTION_RIGHT=$ZHM_SELECTION_RIGHT
 }
 
+# not updated
 function zhm_insert {
   __zhm_save_state_before_insert
   CURSOR=$ZHM_SELECTION_LEFT
@@ -1046,6 +1073,7 @@ function zhm_insert {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_insert_at_line_end {
   if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
     __zhm_goto $((CURSOR + MEND))
@@ -1055,6 +1083,7 @@ function zhm_insert_at_line_end {
   zhm_insert
 }
 
+# not updated
 function zhm_insert_at_line_start {
   if [[ $RBUFFER =~ $'^[^\n]*' ]]; then
     local line="${BUFFER:0:$((CURSOR + MEND))}"
@@ -1067,6 +1096,7 @@ function zhm_insert_at_line_start {
   zhm_insert
 }
 
+# not updated
 function zhm_append {
   __zhm_save_state_before_insert
   CURSOR=$((ZHM_SELECTION_RIGHT + 1))
@@ -1074,6 +1104,7 @@ function zhm_append {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_change {
   local register
   register=$(__zhm_user_specified_register)
@@ -1091,6 +1122,7 @@ function zhm_change {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_replace {
   local char="${KEYS:1}"
   local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT + 1))
@@ -1102,6 +1134,7 @@ function zhm_replace {
   __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
 }
 
+# not updated
 function zhm_delete {
   local register
   register=$(__zhm_user_specified_register)
@@ -1127,6 +1160,7 @@ function zhm_delete {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_undo {
   if ((ZHM_EDITOR_HISTORY_IDX > 1)); then
     ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX - 1))
@@ -1139,6 +1173,7 @@ function zhm_undo {
   fi
 }
 
+# not updated
 function zhm_redo {
   if (((ZHM_EDITOR_HISTORY_IDX * 7) < ${#zhm_editor_history})); then
     ZHM_EDITOR_HISTORY_IDX=$((ZHM_EDITOR_HISTORY_IDX + 1))
@@ -1151,6 +1186,7 @@ function zhm_redo {
   fi
 }
 
+# not updated
 function zhm_yank {
   local register
   register=$(__zhm_user_specified_register)
@@ -1164,6 +1200,7 @@ function zhm_yank {
   fi
 }
 
+# not updated
 function zhm_paste_after {
   local register
   register=$(__zhm_user_specified_register)
@@ -1190,6 +1227,7 @@ function zhm_paste_after {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
+# not updated
 function zhm_paste_before {
   local register
   register=$(__zhm_user_specified_register)
@@ -1216,6 +1254,7 @@ function zhm_paste_before {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
+# not updated
 function zhm_clipboard_yank {
   local ZHM_SELECTION_LEFT=$zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX]
   local ZHM_SELECTION_RIGHT=$zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]
@@ -1225,6 +1264,7 @@ function zhm_clipboard_yank {
   fi
 }
 
+# not updated
 function zhm_clipboard_paste_after {
   local prev_cursor=$CURSOR
   local prev_left=$ZHM_SELECTION_LEFT
@@ -1246,6 +1286,7 @@ function zhm_clipboard_paste_after {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
+# not updated
 function zhm_clipboard_paste_before {
   local prev_cursor=$CURSOR
   local prev_left=$ZHM_SELECTION_LEFT
@@ -1266,6 +1307,7 @@ function zhm_clipboard_paste_before {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
+# not updated
 function zhm_insert_register {
   local register="${KEYS:1}"
   local content=$(__zhm_read_register "$register")
@@ -1281,6 +1323,7 @@ function zhm_insert_register {
   ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
 }
 
+# not updated
 function zhm_self_insert {
   local prev_cursor=$CURSOR
 
@@ -1296,6 +1339,7 @@ function zhm_self_insert {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_insert_newline {
   local prev_cursor=$CURSOR
   # newline lol
@@ -1312,6 +1356,7 @@ ${RBUFFER}"
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_multiline {
   if (( ZHM_MULTILINE == 0 )); then
     PREDISPLAY="-- MULTILINE --
@@ -1323,6 +1368,7 @@ function zhm_multiline {
   fi
 }
 
+# not updated
 function zhm_delete_char_backward {
   local prev_cursor=$CURSOR
   zle backward-delete-char
@@ -1344,6 +1390,7 @@ function zhm_delete_char_backward {
   fi
 }
 
+# not updated
 function zhm_accept {
   ZHM_SELECTION_LEFT=0
   ZHM_SELECTION_RIGHT=0
@@ -1353,6 +1400,7 @@ function zhm_accept {
   REGION_ACTIVE=0
 }
 
+# not updated
 function zhm_accept_or_insert_newline {
   if (( ZHM_MULTILINE == 1 )); then
     zhm_insert_newline
@@ -1361,6 +1409,7 @@ function zhm_accept_or_insert_newline {
   fi
 }
 
+# not updated
 function zhm_history_prev {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
@@ -1373,6 +1422,7 @@ function zhm_history_prev {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_history_next {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
@@ -1385,6 +1435,7 @@ function zhm_history_next {
   __zhm_update_region_highlight
 }
 
+# not updated
 function zhm_expand_or_complete {
   local cursor_pos_before_expand=$CURSOR
   zle expand-or-complete
@@ -1465,6 +1516,7 @@ zle -N zhm_expand_or_complete
 
 # ==============================================================================
 
+# not updated
 function zhm_precmd {
   zhm_cursors_pos=(0)
   zhm_cursors_selection_left=(0)
@@ -1483,6 +1535,7 @@ function zhm_precmd {
   zhm_registers["%"]="$(pwd)"
 }
 
+# not updated
 function zhm_preexec {
   printf "$ZHM_CURSOR_NORMAL"
   REGION_ACTIVE=0
