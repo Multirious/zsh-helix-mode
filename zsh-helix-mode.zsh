@@ -1007,115 +1007,133 @@ function __zhm_find_surround_pair {
   done
 }
 
-# not updated
 function zhm_select_surround_pair_around {
   local char="${KEYS:2}"
-  local left
-  local right
+  local left_char=
+  local right_char=
   case "$char" in
     "(" | ")")
-      left="("
-      right=")"
+      left_char="("
+      right_char=")"
       ;;
     "[" | "]")
-      left="["
-      right="]"
+      left_char="["
+      right_char="]"
       ;;
     "{" | "}")
-      left="{"
-      right="}"
+      left_char="{"
+      right_char="}"
       ;;
     "<" | ">")
-      left="<"
-      right=">"
+      left_char="<"
+      right_char=">"
       ;;
     "'")
-      left="'"
-      right="'"
+      left_char="'"
+      right_char="'"
       ;;
     "\"")
-      left="\""
-      right="\""
+      left_char="\""
+      right_char="\""
       ;;
     "\`")
-      left="\`"
-      right="\`"
+      left_char="\`"
+      right_char="\`"
     ;;
   esac
 
-  local result
-  result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
-  if (( $? != 0 )); then
-    return
-  fi
-  local left=${result% *}
-  local right=${result#* }
-  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_LEFT=$((left - 1))
-    ZHM_SELECTION_RIGHT=$((right - 1))
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    ZHM_SELECTION_LEFT=$((left - 1))
-    ZHM_SELECTION_RIGHT=$((right - 1))
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local result=$(
+      __zhm_find_surround_pair \
+        "$left_char" \
+        "$right_char" \
+        $((cursor + 1)) \
+        "$BUFFER"
+    )
+    if (( $? != 0 )); then
+      return
+    fi
+    local left=$((${result% *} - 1))
+    local right=$((${result#* } - 1))
+    if (( cursor == zhm_cursors_selection_right[i] )); then
+      zhm_cursors_selection_left[$i]=$left
+      zhm_cursors_selection_right[$i]=$right
+      zhm_cursors_pos[$i]=$right
+    else
+      zhm_cursors_selection_left[$i]=$left
+      zhm_cursors_selection_right[$i]=$right
+      zhm_cursors_pos[$i]=$left
+    fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_select_surround_pair_inner {
   local char="${KEYS:2}"
-  local left
-  local right
+  local left_char=
+  local right_char=
   case "$char" in
     "(" | ")")
-      left="("
-      right=")"
+      left_char="("
+      right_char=")"
       ;;
     "[" | "]")
-      left="["
-      right="]"
+      left_char="["
+      right_char="]"
       ;;
     "{" | "}")
-      left="{"
-      right="}"
+      left_char="{"
+      right_char="}"
       ;;
     "<" | ">")
-      left="<"
-      right=">"
+      left_char="<"
+      right_char=">"
       ;;
     "'")
-      left="'"
-      right="'"
+      left_char="'"
+      right_char="'"
       ;;
     "\"")
-      left="\""
-      right="\""
+      left_char="\""
+      right_char="\""
       ;;
     "\`")
-      left="\`"
-      right="\`"
+      left_char="\`"
+      right_char="\`"
     ;;
   esac
 
-  local result
-  result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
-  if (( $? != 0 )); then
-    return
-  fi
-  local left=${result% *}
-  local right=${result#* }
-  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
-    ZHM_SELECTION_LEFT=$((left))
-    ZHM_SELECTION_RIGHT=$((right - 2))
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    ZHM_SELECTION_LEFT=$((left))
-    ZHM_SELECTION_RIGHT=$((right - 2))
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local result=$(
+      __zhm_find_surround_pair \
+        "$left_char" \
+        "$right_char" \
+        $((cursor + 1)) \
+        "$BUFFER"
+    )
+    if (( $? != 0 )); then
+      return
+    fi
+    local left=$((${result% *}))
+    local right=$((${result#* } - 2))
+    if (( cursor == zhm_cursors_selection_right[i] )); then
+      zhm_cursors_selection_left[$i]=$left
+      zhm_cursors_selection_right[$i]=$right
+      zhm_cursors_pos[$i]=$right
+    else
+      zhm_cursors_selection_left[$i]=$left
+      zhm_cursors_selection_right[$i]=$right
+      zhm_cursors_pos[$i]=$left
+    fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_last_moved
   __zhm_update_region_highlight
