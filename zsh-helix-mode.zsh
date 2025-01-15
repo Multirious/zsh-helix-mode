@@ -1737,11 +1737,7 @@ function zhm_delete_char_backward {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_accept {
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
-
   zle accept-line
   MARK=
   REGION_ACTIVE=0
