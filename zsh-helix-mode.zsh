@@ -127,6 +127,9 @@ function __zhm_update_region_highlight {
   done
 
   for i in {1..$#zhm_cursors_pos}; do
+    if (( i == ZHM_PRIMARY_CURSOR_IDX )); then
+      continue
+    fi
     local cursor="$zhm_cursors_pos[$i]"
     local cursor_right="$((cursor + 1))"
     if [[ $ZHM_MODE != select ]]; then
@@ -345,7 +348,6 @@ function __zhm_merge_cursors {
         zhm_cursors_selection_right[$j]=()
 
         j=$((j - 1))
-        i=$((i - 1))
       fi
     done
   done
