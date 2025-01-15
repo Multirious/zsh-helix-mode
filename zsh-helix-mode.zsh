@@ -61,6 +61,7 @@ zhm_changes_history_primary_cursor_post=(1)
 zhm_cursors_last_moved_x=(0)
 
 declare -A zhm_registers
+declare -A zhm_registers_max
 
 ZHM_HOOK_IKNOWWHATIMDOING=0
 
@@ -70,15 +71,16 @@ ZHM_LAST_MOTION_CHAR=""
 # ==============================================================================
 
 function __zhm_read_register {
-  case "$1" in
+  local register=$1
+  local idx=$2
+  case "$register" in
     "_")
       ;;
     "#")
-      # this should return selection indices but there's always one selection anyway
-      print "1"
+      print "$idx"
       ;;
     ".")
-      print "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]"
+      print "$BUFFER[$((zhm_cursors_selection_left[$idx] + 1)),$((zhm_cursors_selection_right[$idx] + 1))]"
       ;;
     "%")
       print "$(pwd)"
@@ -87,21 +89,29 @@ function __zhm_read_register {
       print "$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
       ;;
     *)
-      local content="$zhm_registers["$1"]"
-      print "$content"
+      if (( ! ${+zhm_registers_max["$register"]} )); then
+        return
+      fi
+      local idx=$(( idx <= zhm_registers_max["$register"] ? idx : zhm_registers_max["$register"] ))
+      print "${zhm_registers["${register}_${idx}"]}"
       ;;
   esac
 }
 
 function __zhm_write_register {
-  case "$1" in
+  local register=$1
+  shift
+  case "$register" in
     "_"| "#" | "." | "%")
       ;;
     "+")
-       print "$2" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
+      print "$@" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
       ;;
     *)
-      zhm_registers["$1"]="$2"
+      for i in {1..$#}; do
+        zhm_registers["${register}_$i"]="${(P)i}"
+      done
+      zhm_registers_max["$register"]=$#
       ;;
   esac
 }
@@ -1374,15 +1384,20 @@ function zhm_append {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_change {
-  # local register
-  # register=$(__zhm_user_specified_register)
-  # if (( $? != 0 )); then
-  #   register="\""
-  # fi
+  local register=
+  register="$(__zhm_user_specified_register)"
+  if (( $? != 0 )); then
+    register="\""
+  fi
 
-  # __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+  local content=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    content+="${BUFFER[$((left + 1)),$((right + 1))]}"
+  done
+  __zhm_write_register "$register" "$content[@]"
 
   __zhm_update_changes_history_pre
 
@@ -1423,15 +1438,21 @@ function zhm_replace {
   __zhm_update_changes_history_post
 }
 
-# not updated
 function zhm_delete {
-  # local register
-  # register=$(__zhm_user_specified_register)
-  # if (( $? != 0 )); then
-  #   register="\""
-  # fi
+  local register=
+  register="$(__zhm_user_specified_register)"
+  if (( $? != 0 )); then
+    register="\""
+  fi
 
-  # __zhm_write_register "$register" "${BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]}"
+  local content=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    content+="${BUFFER[$((left + 1)),$((right + 1))]}"
+  done
+  __zhm_write_register "$register" "$content[@]"
+
   __zhm_update_changes_history_pre
 
   local amount_deleted=0
@@ -1506,124 +1527,169 @@ function zhm_redo {
   fi
 }
 
-# not updated
 function zhm_yank {
-  local register
-  register=$(__zhm_user_specified_register)
+  local register=
+  register="$(__zhm_user_specified_register)"
   if (( $? != 0 )); then
     register="\""
   fi
-  local content="$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]"
-  __zhm_write_register "$register" "$content"
+
+  local content=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    content+="${BUFFER[$((left + 1)),$((right + 1))]}"
+  done
+  __zhm_write_register "$register" "$content[@]"
+
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
   fi
 }
 
-# not updated
 function zhm_paste_after {
-  local register
-  register=$(__zhm_user_specified_register)
+  local register=
+  register="$(__zhm_user_specified_register)"
   if (( $? != 0 )); then
     register="\""
   fi
-  local content=$(__zhm_read_register "$register")
 
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
+  __zhm_update_changes_history_pre
 
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT + 1))}$content${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
-  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  local amount_pasted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local content=$(__zhm_read_register "$register" $i)
+
+    local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
+    local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
+    local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+
+    BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
+    zhm_cursors_selection_left[$i]=$((right + 1))
+    zhm_cursors_selection_right[$i]=$((right + ${#content}))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_pasted=$((amount_pasted + ${#content}))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
   __zhm_update_last_moved
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_region_highlight
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
-# not updated
 function zhm_paste_before {
-  local register
-  register=$(__zhm_user_specified_register)
+  local register=
+  register="$(__zhm_user_specified_register)"
   if (( $? != 0 )); then
     register="\""
   fi
-  local content=$(__zhm_read_register "$register")
-  
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
 
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content} - 1))
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  __zhm_update_changes_history_pre
 
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  local amount_pasted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local content=$(__zhm_read_register "$register" $i)
+
+    local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
+    local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
+    local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+
+    BUFFER="${BUFFER:0:$(($left))}$content${BUFFER:$left}"
+    zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_pasted=$((amount_pasted + ${#content}))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
   __zhm_update_region_highlight
   __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
-# not updated
 function zhm_clipboard_yank {
-  local ZHM_SELECTION_LEFT=$zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX]
-  local ZHM_SELECTION_RIGHT=$zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]
-  print "$BUFFER[$((ZHM_SELECTION_LEFT + 1)),$((ZHM_SELECTION_RIGHT + 1))]" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
+  register="+"
+
+  local content=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    content+="${BUFFER[$((left + 1)),$((right + 1))]}"
+  done
+  __zhm_write_register "$register" "$content[@]"
+
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
   fi
 }
 
-# not updated
 function zhm_clipboard_paste_after {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
+  register="+"
 
-  local content="$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_RIGHT + 1))}$content${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
-  ZHM_SELECTION_LEFT=$((ZHM_SELECTION_RIGHT + 1))
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  __zhm_update_changes_history_pre
 
+  local amount_pasted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local content=$(__zhm_read_register "$register" $i)
+
+    local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
+    local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
+    local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+
+    BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
+    zhm_cursors_selection_left[$i]=$((right + 1))
+    zhm_cursors_selection_right[$i]=$((right + ${#content}))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_pasted=$((amount_pasted + ${#content}))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
   __zhm_update_last_moved
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
   __zhm_update_region_highlight
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
-# not updated
 function zhm_clipboard_paste_before {
-  local prev_cursor=$CURSOR
-  local prev_left=$ZHM_SELECTION_LEFT
-  local prev_right=$ZHM_SELECTION_RIGHT
+  local register="+"
 
-  local content="$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
-  BUFFER="${BUFFER:0:$(($ZHM_SELECTION_LEFT))}$content${BUFFER:$ZHM_SELECTION_LEFT}"
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_LEFT + ${#content} - 1))
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
+  __zhm_update_changes_history_pre
 
-  __zhm_update_last_moved
-  __zhm_update_editor_history "$BUFFER" $prev_cursor $prev_left $prev_right $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  local amount_pasted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local content=$(__zhm_read_register "$register" $i)
+
+    local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
+    local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
+    local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+
+    BUFFER="${BUFFER:0:$(($left))}$content${BUFFER:$left}"
+    zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_pasted=$((amount_pasted + ${#content}))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
   __zhm_update_region_highlight
+  __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
@@ -1907,7 +1973,6 @@ function zhm_precmd {
       printf "$ZHM_CURSOR_NORMAL"
       ;;
   esac
-  zhm_registers["%"]="$(pwd)"
 }
 
 function zhm_preexec {
@@ -1966,30 +2031,32 @@ function zhm_zle_line_pre_redraw {
   ZHM_PREV_CURSOR=$CURSOR
   ZHM_PREV_MODE=$ZHM_MODE
 
-  echo "" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "history $ZHM_CHANGES_HISTORY_IDX" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "pre  start $zhm_changes_history_cursors_idx_starts_pre" >> /tmp/zhm_log
-  echo "pre  count $zhm_changes_history_cursors_count_pre" >> /tmp/zhm_log
-  echo "pre  pos   $zhm_changes_history_cursors_pos_pre" >> /tmp/zhm_log
-  echo "pre  left  $zhm_changes_history_cursors_selection_left_pre" >> /tmp/zhm_log
-  echo "pre  right $zhm_changes_history_cursors_selection_right_pre" >> /tmp/zhm_log
-  echo "pre  prim  $zhm_changes_history_primary_cursor_pre" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "post start $zhm_changes_history_cursors_idx_starts_post" >> /tmp/zhm_log
-  echo "post count $zhm_changes_history_cursors_count_post" >> /tmp/zhm_log
-  echo "post pos   $zhm_changes_history_cursors_pos_post" >> /tmp/zhm_log
-  echo "post left  $zhm_changes_history_cursors_selection_left_post" >> /tmp/zhm_log
-  echo "post right $zhm_changes_history_cursors_selection_right_post" >> /tmp/zhm_log
-  echo "post prim  $zhm_changes_history_primary_cursor_post" >> /tmp/zhm_log
-  echo "" >> /tmp/zhm_log
-  echo "curr pos   $zhm_cursors_pos" >> /tmp/zhm_log
-  echo "curr left  $zhm_cursors_selection_left" >> /tmp/zhm_log
-  echo "curr right $zhm_cursors_selection_right" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "history $ZHM_CHANGES_HISTORY_IDX" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "pre  start $zhm_changes_history_cursors_idx_starts_pre" >> /tmp/zhm_log
+  # echo "pre  count $zhm_changes_history_cursors_count_pre" >> /tmp/zhm_log
+  # echo "pre  pos   $zhm_changes_history_cursors_pos_pre" >> /tmp/zhm_log
+  # echo "pre  left  $zhm_changes_history_cursors_selection_left_pre" >> /tmp/zhm_log
+  # echo "pre  right $zhm_changes_history_cursors_selection_right_pre" >> /tmp/zhm_log
+  # echo "pre  prim  $zhm_changes_history_primary_cursor_pre" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "post start $zhm_changes_history_cursors_idx_starts_post" >> /tmp/zhm_log
+  # echo "post count $zhm_changes_history_cursors_count_post" >> /tmp/zhm_log
+  # echo "post pos   $zhm_changes_history_cursors_pos_post" >> /tmp/zhm_log
+  # echo "post left  $zhm_changes_history_cursors_selection_left_post" >> /tmp/zhm_log
+  # echo "post right $zhm_changes_history_cursors_selection_right_post" >> /tmp/zhm_log
+  # echo "post prim  $zhm_changes_history_primary_cursor_post" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "curr pos   $zhm_cursors_pos" >> /tmp/zhm_log
+  # echo "curr left  $zhm_cursors_selection_left" >> /tmp/zhm_log
+  # echo "curr right $zhm_cursors_selection_right" >> /tmp/zhm_log
+  # echo "" >> /tmp/zhm_log
+  # echo "${(kv)zhm_registers}" >> /tmp/zhm_log
 }
 
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
