@@ -481,7 +481,7 @@ function zhm_move_next_word_start {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -501,7 +501,7 @@ function zhm_move_prev_word_start {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -521,7 +521,7 @@ function zhm_move_next_word_end {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -541,7 +541,7 @@ function zhm_move_next_long_word_start {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -561,7 +561,7 @@ function zhm_move_prev_long_word_start {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -581,7 +581,7 @@ function zhm_move_next_long_word_end {
       __zhm_trailing_goto $i $go $skip
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -597,7 +597,7 @@ function zhm_find_till_char {
   done
   ZHM_LAST_MOTION="find_till"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -613,7 +613,7 @@ function zhm_find_next_char {
   done
   ZHM_LAST_MOTION="find_next"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -629,7 +629,7 @@ function zhm_till_prev_char {
   done
   ZHM_LAST_MOTION="till_prev"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -645,7 +645,7 @@ function zhm_find_prev_char {
   done
   ZHM_LAST_MOTION="find_prev"
   ZHM_LAST_MOTION_CHAR="$char"
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -689,7 +689,7 @@ function zhm_repeat_last_motion {
       done
       ;;    
   esac
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -697,7 +697,7 @@ function zhm_goto_first_line {
   for i in {1..$#zhm_cursors_pos}; do
     __zhm_goto $i 0
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -707,7 +707,7 @@ function zhm_goto_last_line {
       __zhm_goto $i $((MBEGIN - 1))
     done
   fi
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -719,7 +719,7 @@ function zhm_goto_line_start {
       __zhm_goto $i $((MBEGIN - 1))
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -733,7 +733,7 @@ function zhm_goto_line_end {
       __zhm_goto $i $((cursor - 1))
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -749,7 +749,7 @@ function zhm_goto_line_first_nonwhitespace {
       fi
     fi
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -809,7 +809,7 @@ function zhm_surround_add {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_changes_history_post
   __zhm_update_region_highlight
 }
@@ -849,7 +849,7 @@ function zhm_select_word_inner {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_region_highlight
 }
@@ -889,7 +889,7 @@ function zhm_select_word_around {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_region_highlight
 }
@@ -922,7 +922,7 @@ function zhm_select_long_word_inner {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_region_highlight
 }
@@ -956,12 +956,11 @@ function zhm_select_long_word_around {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_region_highlight
 }
 
-# not updated
 function __zhm_find_surround_pair {
   local left_char="$1"
   local right_char="$2"
@@ -1437,7 +1436,7 @@ function zhm_undo {
     ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
     CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
     ZHM_HOOK_IKNOWWHATIMDOING=1
-    __zhm_update_last_move
+    __zhm_update_last_moved
     __zhm_update_region_highlight
   fi
 }
@@ -1461,7 +1460,7 @@ function zhm_redo {
     ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_post[$ZHM_CHANGES_HISTORY_IDX]
     CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
     ZHM_HOOK_IKNOWWHATIMDOING=1
-    __zhm_update_last_move
+    __zhm_update_last_moved
     __zhm_update_region_highlight
   fi
 }
@@ -1625,7 +1624,7 @@ function zhm_self_insert {
     inserted_count=$((inserted_count + 1))
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1651,7 +1650,7 @@ ${BUFFER:$cursor}"
     zhm_cursors_last_moved_x[$i]=$((cursor + 1))
     inserted_count=$((inserted_count + 1))
   done
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1693,7 +1692,7 @@ function zhm_delete_char_backward {
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1726,7 +1725,7 @@ function zhm_history_prev {
   HISTNO=$((HISTNO - 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1740,7 +1739,7 @@ function zhm_history_next {
   HISTNO=$((HISTNO + 1))
   ZHM_SELECTION_LEFT=$CURSOR
   ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1750,7 +1749,7 @@ function zhm_expand_or_complete {
   zle expand-or-complete
   ZHM_SELECTION_LEFT=$cursor_pos_before_expand
   ZHM_SELECTION_RIGHT=$CURSOR
-  __zhm_update_last_move
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
