@@ -1061,6 +1061,7 @@ function zhm_select_surround_pair_around {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1117,6 +1118,7 @@ function zhm_select_surround_pair_inner {
     CURSOR=$ZHM_SELECTION_LEFT
   fi
   ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1173,6 +1175,7 @@ function zhm_match_brackets {
 
   __zhm_handle_goto_selection $prev_cursor
 
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
@@ -1182,6 +1185,7 @@ function zhm_select_all {
   zhm_cursors_pos=($CURSOR)
   zhm_cursors_selection_left=(0)
   zhm_cursors_selection_right=($CURSOR)
+  __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
