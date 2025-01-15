@@ -1202,7 +1202,6 @@ function zhm_match_brackets {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_select_all {
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -1212,74 +1211,89 @@ function zhm_select_all {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_collapse_selection {
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$CURSOR
+  zhm_cursors_selection_left=("$zhm_cursors_pos[@]")
+  zhm_cursors_selection_right=("$zhm_cursors_pos[@]")
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_flip_selections {
-  if (( CURSOR == ZHM_SELECTION_RIGHT )); then
-    CURSOR=$ZHM_SELECTION_LEFT
-  else
-    CURSOR=$ZHM_SELECTION_RIGHT
-  fi
-  __zhm_update_last_moved
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_ensure_selections_forward {
-  CURSOR=$ZHM_SELECTION_RIGHT
-  __zhm_update_last_moved
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_extend_to_line_bounds {
-  local prev_cursor=$CURSOR
-  local prev_right=$ZHM_SELECTION_RIGHT
-  local prev_left=$ZHM_SELECTION_LEFT
-
-  if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
-    ZHM_SELECTION_LEFT=$((MBEGIN - 1))
-  fi
-  if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $'^[^\n]*\n|^[^\n]*$' ]]; then
-    ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
-  fi
-  if (( prev_cursor == prev_right )); then
-    CURSOR=$ZHM_SELECTION_RIGHT
-  else
-    CURSOR=$ZHM_SELECTION_LEFT
-  fi
-  __zhm_update_last_moved
-  __zhm_update_region_highlight
-}
-
-# not updated
-function zhm_extend_line_below {
-  if [[ "$BUFFER[$((ZHM_SELECTION_LEFT + 1))]" == $'\n' ]]; then
-    if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
-      ZHM_SELECTION_LEFT=$((MBEGIN - 1))
-    fi
-  else
-    if [[ "${BUFFER:0:$ZHM_SELECTION_LEFT}" =~ $'[^\n]*$' ]]; then
-      ZHM_SELECTION_LEFT=$((MBEGIN - 1))
-    fi
-
-    local regex
-    if [[ "${BUFFER[$((ZHM_SELECTION_RIGHT + 1))]}" == $'\n' ]]; then
-      regex=$'^\n[^\n]*\n|^\n[^\n]*$'
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local left=$zhm_cursors_selection_left[$i]
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$left
     else
-      regex=$'^[^\n]*\n|^[^\n]*$'
+      zhm_cursors_pos[$i]=$right
     fi
-    if [[ "${BUFFER:$ZHM_SELECTION_RIGHT}" =~ $regex ]]; then
-      ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + MEND - 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
+function zhm_ensure_selections_forward {
+  zhm_cursors_pos=("$zhm_cursors_selection_righ[@]")
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
+function zhm_extend_to_line_bounds {
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local left=$zhm_cursors_selection_left[$i]
+
+    if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
+      zhm_cursors_selection_left[$i]=$((MBEGIN - 1))
     fi
-  fi
+    if [[ "${BUFFER:$right}" =~ $'^[^\n]*\n|^[^\n]*$' ]]; then
+      zhm_cursors_selection_right[$i]=$((right + MEND - 1))
+    fi
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
+function zhm_extend_line_below {
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local left=$zhm_cursors_selection_left[$i]
+
+    if [[ "$BUFFER[$((left + 1))]" == $'\n' ]]; then
+      if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
+        left=$((MBEGIN - 1))
+      fi
+    else
+      if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
+        left=$((MBEGIN - 1))
+      fi
+
+      local regex=
+      if [[ "${BUFFER[$((right + 1))]}" == $'\n' ]]; then
+        regex=$'^\n[^\n]*\n|^\n[^\n]*$'
+      else
+        regex=$'^[^\n]*\n|^[^\n]*$'
+      fi
+      if [[ "${BUFFER:$right}" =~ $regex ]]; then
+        right=$((right + MEND - 1))
+      fi
+      zhm_cursors_selection_right[$i]=$right
+      zhm_cursors_selection_left[$i]=$left
+      zhm_cursors_pos[$i]=$right
+    fi
+  done
   CURSOR=$ZHM_SELECTION_RIGHT
+
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
@@ -1304,7 +1318,6 @@ function zhm_normal {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_select {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
