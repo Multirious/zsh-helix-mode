@@ -1407,16 +1407,20 @@ function zhm_change {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_replace {
+  __zhm_update_changes_history_pre
   local char="${KEYS:1}"
-  local count=$((ZHM_SELECTION_RIGHT - ZHM_SELECTION_LEFT + 1))
-  local replace_with=$(printf "$char"'%.0s' {1..$count})
-  BUFFER="${BUFFER:0:$ZHM_SELECTION_LEFT}$replace_with${BUFFER:$((ZHM_SELECTION_RIGHT + 1))}"
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local count=$((right - left + 1))
+    local replace_with=$(printf "$char"'%.0s' {1..$count})
+    BUFFER="${BUFFER:0:$left}$replace_with${BUFFER:$((right + 1))}"
+  done
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
   fi
-  __zhm_update_editor_history "$BUFFER" $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT $CURSOR $ZHM_SELECTION_LEFT $ZHM_SELECTION_RIGHT
+  __zhm_update_changes_history_post
 }
 
 # not updated
