@@ -1786,12 +1786,15 @@ function zhm_history_next {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_expand_or_complete {
-  local cursor_pos_before_expand=$CURSOR
+  local cursor_before_expand=$CURSOR
   zle expand-or-complete
-  ZHM_SELECTION_LEFT=$cursor_pos_before_expand
-  ZHM_SELECTION_RIGHT=$CURSOR
+
+  zhm_cursors_pos=($CURSOR)
+  zhm_cursors_selection_left=($cursor_before_expand)
+  zhm_cursors_selection_right=($CURSOR)
+  zhm_cursors_last_moved_x=($CURSOR)
+
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
