@@ -1139,58 +1139,64 @@ function zhm_select_surround_pair_inner {
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_match_brackets {
-  local prev_cursor=$CURSOR
-  local char="${BUFFER[$((CURSOR + 1))]}"
-  local left
-  local right
-  case "$char" in
-    "(" | ")")
-      left="("
-      right=")"
-      ;;
-    "[" | "]")
-      left="["
-      right="]"
-      ;;
-    "{" | "}")
-      left="{"
-      right="}"
-      ;;
-    "<" | ">")
-      left="<"
-      right=">"
-      ;;
-    "'")
-      left="'"
-      right="'"
-      ;;
-    "\"")
-      left="\""
-      right="\""
-      ;;
-    "\`")
-      left="\`"
-      right="\`"
-      ;;
-    *)
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local char="${BUFFER[$((cursor + 1))]}"
+    local left_char=
+    local right_char=
+    case "$char" in
+      "(" | ")")
+        left_char="("
+        right_char=")"
+        ;;
+      "[" | "]")
+        left_char="["
+        right_char="]"
+        ;;
+      "{" | "}")
+        left_char="{"
+        right_char="}"
+        ;;
+      "<" | ">")
+        left_char="<"
+        right_char=">"
+        ;;
+      "'")
+        left_char="'"
+        right_char="'"
+        ;;
+      "\"")
+        left_char="\""
+        right_char="\""
+        ;;
+      "\`")
+        left_char="\`"
+        right_char="\`"
+        ;;
+      *)
+        return
+        ;;
+    esac
+    local result=$(
+      __zhm_find_surround_pair \
+        "$left_char" \
+        "$right_char" \
+        $((cursor + 1)) \
+        "$BUFFER"
+    )
+    if [[ $? != 0 ]]; then
       return
-      ;;
-  esac
-  local result=$(__zhm_find_surround_pair "$left" "$right" $((CURSOR + 1)) "$BUFFER")
-  if [[ $? != 0 ]]; then
-    return
-  fi
-  local left=${result% *}
-  local right=${result#* }
-  if (( ($CURSOR + 1) == $left )); then
-    CURSOR=$((right - 1))
-  elif (( ($CURSOR + 1) == $right )); then
-    CURSOR=$((left - 1))
-  fi
-
-  __zhm_handle_goto_selection $prev_cursor
+    fi
+    local left=$((${result% *} - 1))
+    local right=$((${result#* } - 1))
+    if (( cursor == left )); then
+      __zhm_goto $i $right
+    elif (( cursor == right )); then
+      __zhm_goto $i $left
+    fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
 
   __zhm_update_last_moved
   __zhm_update_region_highlight
