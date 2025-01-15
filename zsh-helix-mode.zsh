@@ -1752,30 +1752,36 @@ function zhm_accept_or_insert_newline {
   fi
 }
 
-# not updated
 function zhm_history_prev {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
   fi
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
+
   HISTNO=$((HISTNO - 1))
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+
+  CURSOR=${#BUFFER}
+  zhm_cursors_pos=($CURSOR)
+  zhm_cursors_selection_left=($CURSOR)
+  zhm_cursors_selection_right=($CURSOR)
+  zhm_cursors_last_moved_x=($CURSOR)
+
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_history_next {
   if [[ $ZHM_MODE == select ]]; then
     __zhm_mode_normal
   fi
-  ZHM_SELECTION_LEFT=0
-  ZHM_SELECTION_RIGHT=0
+
   HISTNO=$((HISTNO + 1))
-  ZHM_SELECTION_LEFT=$CURSOR
-  ZHM_SELECTION_RIGHT=$(($CURSOR + 1))
+
+  CURSOR=${#BUFFER}
+  zhm_cursors_pos=($CURSOR)
+  zhm_cursors_selection_left=($CURSOR)
+  zhm_cursors_selection_right=($CURSOR)
+  zhm_cursors_last_moved_x=($CURSOR)
+
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
