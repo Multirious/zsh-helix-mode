@@ -15,11 +15,14 @@ export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[0m\e[2 q\e]12;#F2CDCD\a}"
 export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[0m\e[5 q\e]12;white\a}"
 
 # Uses the syntax from https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
-export ZHM_STYLE_SELECTION="fg=white,bg=#45475a"
 
+export ZHM_STYLE_CURSOR_NORMAL="fg=black,bg=#b4befe"
+export ZHM_STYLE_CURSOR_SELECT="fg=black,bg=#f2cdcd"
+export ZHM_STYLE_CURSOR_INSERT="fg=black,bg=#a6e3a1"
+export ZHM_STYLE_OTHER_CURSOR_NORMAL="fg=black,bg=#878ec0"
 export ZHM_STYLE_OTHER_CURSOR_SELECT="fg=black,bg=#b5a6a8"
-
-export ZHM_STYLE_OTHER_CURSOR="fg=black,bg=#878ec0"
+export ZHM_STYLE_OTHER_CURSOR_INSERT='fg=black,bg=#7ea87f'
+export ZHM_STYLE_SELECTION="fg=white,bg=#45475a"
 
 # Clipboard commands
 if [[ -n $DISPLAY ]]; then
@@ -142,11 +145,19 @@ function __zhm_update_region_highlight {
     fi
     local cursor="$zhm_cursors_pos[$i]"
     local cursor_right="$((cursor + 1))"
-    if [[ $ZHM_MODE != select ]]; then
-      region_highlight+=("$cursor $cursor_right $ZHM_STYLE_OTHER_CURSOR memo=zhm_highlight")
-    else
-      region_highlight+=("$cursor $cursor_right $ZHM_STYLE_OTHER_CURSOR_SELECT memo=zhm_highlight")
-    fi
+    local style=
+    case $ZHM_MODE in
+      normal)
+        style="$ZHM_STYLE_OTHER_CURSOR_NORMAL"
+        ;;
+      select)
+        style="$ZHM_STYLE_OTHER_CURSOR_SELECT"
+        ;;
+      insert)
+        style="$ZHM_STYLE_OTHER_CURSOR_INSERT"
+        ;;
+    esac
+    region_highlight+=("$cursor $cursor_right $style memo=zhm_highlight")
   done
 }
 
