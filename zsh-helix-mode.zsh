@@ -67,6 +67,9 @@ declare -A zhm_registers
 declare -A zhm_registers_max
 
 ZHM_HOOK_IKNOWWHATIMDOING=0
+ZHM_IN_PROMPT=0
+ZHM_PROMPT_HOOK=
+zhm_prompt_region_highlight=()
 
 ZHM_LAST_MOTION=""
 ZHM_LAST_MOTION_CHAR=""
@@ -131,6 +134,9 @@ function __zhm_user_specified_register {
 function __zhm_update_region_highlight {
   region_highlight=(
     ${region_highlight:#*memo=zhm_highlight}
+  )
+  region_highlight=(
+    ${region_highlight:#*memo=zhm_prompt_highlight}
   )
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
@@ -372,6 +378,59 @@ function __zhm_merge_cursors {
       fi
     done
   done
+}
+
+function __zhm_prompt {
+  local prompt="$1"
+
+  local prev_buffer="$BUFFER"
+  local prev_cursor="$CURSOR"
+
+  PREDISPLAY="$prev_buffer
+$prompt"
+  BUFFER=""
+
+  zhm_prompt_region_highlight=(
+    "${(@)region_highlight:#*memo=zhm_highlight}"
+  )
+  zhm_prompt_region_highlight=(
+    "${(@)zhm_prompt_region_highlight/#/P}"
+  )
+  zhm_prompt_region_highlight=(
+    "${(@)zhm_prompt_region_highlight/memo=*/memo=zhm_prompt_highlight}"
+  )
+  region_highlight=()
+
+  ZHM_PROMPT_HOOK="$2"
+  ZHM_IN_PROMPT=1
+  printf "$ZHM_CURSOR_INSERT"
+  bindkey -A hxprompt main
+  
+  zle recursive-edit
+
+  zhm_prompt_region_highlight=()
+
+  ZHM_IN_PROMPT=0
+  ZHM_PROMPT_HOOK=
+
+  PREDISPLAY=""
+  REPLY="$BUFFER"
+  BUFFER="$prev_buffer"
+  CURSOR="$prev_cursor"
+
+  case $ZHM_MODE in
+    normal)
+      __zhm_mode_normal
+      ;;
+    select)
+      __zhm_mode_select
+      ;;
+    insert)
+      __zhm_mode_insert
+      ;;
+  esac
+
+  __zhm_update_region_highlight
 }
 
 function zhm_move_right {
@@ -1223,6 +1282,28 @@ function zhm_match_brackets {
   __zhm_update_region_highlight
 }
 
+function __zhm_select_regex_hook {
+  # region_highlight=
+}
+
+function zhm_select_regex {
+  local REPLY=
+
+  __zhm_prompt "select:" __zhm_select_regex_hook
+
+  echo "$REPLY" >> /tmp/zhm_log
+  
+  # echo "$select" >> /tmp/zhm_log
+  # for i in {1..$#zhm_cursors_pos}; do
+  #   local left=$zhm_cursors_selection_left[$i]
+  #   local right=$zhm_cursors_selection_right[$i]
+  #   local substring="${BUFFER[$((left + 1)),$((right + 1))]}"
+  #   while true; do
+  #     if [[ $substring ~=  ]]
+  #   done
+  # done
+}
+
 function zhm_select_all {
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -1876,6 +1957,18 @@ function zhm_expand_or_complete {
   __zhm_update_region_highlight
 }
 
+function zhm_prompt_self_insert {
+  zle .self-insert
+}
+
+function zhm_prompt_delete_char_backward {
+  zle backward-delete-char
+}
+
+function zhm_prompt_accept {
+  zle accept-line
+}
+
 # ==============================================================================
 
 zle -N zhm_move_left
@@ -1912,6 +2005,7 @@ zle -N zhm_select_surround_pair_inner
 zle -N zhm_select_surround_pair_around
 zle -N zhm_copy_selection_on_next_line
 
+zle -N zhm_select_regex
 zle -N zhm_select_all
 zle -N zhm_collapse_selection
 zle -N zhm_flip_selections
@@ -1949,6 +2043,10 @@ zle -N zhm_accept_or_insert_newline
 zle -N zhm_history_next
 zle -N zhm_history_prev
 zle -N zhm_expand_or_complete
+
+zle -N zhm_prompt_delete_char_backward
+zle -N zhm_prompt_self_insert
+zle -N zhm_prompt_accept
 
 # ==============================================================================
 
@@ -2002,45 +2100,52 @@ preexec_functions+=(zhm_preexec)
 function zhm_zle_line_pre_redraw {
   # Keeps selection range in check
 
-  if (( ZHM_HOOK_IKNOWWHATIMDOING == 0 )); then
-    case "$ZHM_PREV_MODE $ZHM_MODE" in
-      "normal normal")
-        for i in {1..$#zhm_cursors_pos}; do
-          if (( CURSOR > ZHM_PREV_CURSOR )); then
-            zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
-            zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
-          elif (( CURSOR < ZHM_PREV_CURSOR )); then
-            zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
-            zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
-          fi
-        done
-        ;;
-    esac
+  if (( ZHM_IN_PROMPT == 0 )); then
+    if (( ZHM_HOOK_IKNOWWHATIMDOING == 0 )); then
+      case "$ZHM_PREV_MODE $ZHM_MODE" in
+        "normal normal")
+          for i in {1..$#zhm_cursors_pos}; do
+            if (( CURSOR > ZHM_PREV_CURSOR )); then
+              zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
+              zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
+            elif (( CURSOR < ZHM_PREV_CURSOR )); then
+              zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
+              zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
+            fi
+          done
+          ;;
+      esac
+    fi
+
+    local buffer_len=$#BUFFER
+    for i in {1..$#zhm_cursors_pos}; do
+      local pos=$zhm_cursors_pos[$i]
+      local left=$zhm_cursors_selection_left[$i]
+      local right=$zhm_cursors_selection_right[$i]
+
+      zhm_cursors_pos[$i]=$((pos < buffer_len ? pos : buffer_len))
+      local pos=$zhm_cursors_pos[$i]
+      zhm_cursors_pos[$i]=$((pos > 0 ? pos: 0))
+      zhm_cursors_selection_left[$i]=$((left < buffer_len ? left : buffer_len))
+      local left=$zhm_cursors_selection_left[$i]
+      zhm_cursors_selection_left[$i]=$((left > 0 ? left : 0))
+      zhm_cursors_selection_right[$i]=$((right < buffer_len ? right : buffer_len))
+      local right=$zhm_cursors_selection_right[$i]
+      zhm_cursors_selection_right[$i]=$((right > 0 ? right: 0))
+    done
+
+    __zhm_merge_cursors
+    __zhm_update_region_highlight
+
+    ZHM_HOOK_IKNOWWHATIMDOING=0
+    ZHM_PREV_CURSOR=$CURSOR
+    ZHM_PREV_MODE=$ZHM_MODE
+  else
+    region_highlight=( "${(@)zhm_prompt_region_highlight}" )
+    if [[ -n "$ZHM_PROMPT_HOOK" ]]; then
+      eval $ZHM_PROMPT_HOOK
+    fi
   fi
-
-  local buffer_len=$#BUFFER
-  for i in {1..$#zhm_cursors_pos}; do
-    local pos=$zhm_cursors_pos[$i]
-    local left=$zhm_cursors_selection_left[$i]
-    local right=$zhm_cursors_selection_right[$i]
-
-    zhm_cursors_pos[$i]=$((pos < buffer_len ? pos : buffer_len))
-    local pos=$zhm_cursors_pos[$i]
-    zhm_cursors_pos[$i]=$((pos > 0 ? pos: 0))
-    zhm_cursors_selection_left[$i]=$((left < buffer_len ? left : buffer_len))
-    local left=$zhm_cursors_selection_left[$i]
-    zhm_cursors_selection_left[$i]=$((left > 0 ? left : 0))
-    zhm_cursors_selection_right[$i]=$((right < buffer_len ? right : buffer_len))
-    local right=$zhm_cursors_selection_right[$i]
-    zhm_cursors_selection_right[$i]=$((right > 0 ? right: 0))
-  done
-
-  __zhm_merge_cursors
-  __zhm_update_region_highlight
-
-  ZHM_HOOK_IKNOWWHATIMDOING=0
-  ZHM_PREV_CURSOR=$CURSOR
-  ZHM_PREV_MODE=$ZHM_MODE
 
   # echo "" >> /tmp/zhm_log
   # echo "" >> /tmp/zhm_log
@@ -2078,6 +2183,7 @@ printf "$ZHM_CURSOR_INSERT"
 
 bindkey -N hxnor
 bindkey -N hxins
+bindkey -N hxprompt
 
 bindkey -A hxins main
 
@@ -2118,6 +2224,7 @@ bindkey -M hxnor "maw" zhm_select_word_around
 bindkey -M hxnor "miW" zhm_select_long_word_inner
 bindkey -M hxnor "maW" zhm_select_long_word_around
 
+bindkey -M hxnor s zhm_select_regex
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor \; zhm_collapse_selection
 bindkey -M hxnor "^[;" zhm_flip_selections
@@ -2176,3 +2283,8 @@ bindkey -M hxins "^M" zhm_accept_or_insert_newline
 bindkey -M hxins "^N" zhm_history_next
 bindkey -M hxins "^P" zhm_history_prev
 bindkey -M hxins "^I" zhm_expand_or_complete
+
+bindkey -M hxprompt -R " "-"~" zhm_prompt_self_insert
+bindkey -M hxprompt "^?" zhm_prompt_delete_char_backward
+bindkey -M hxprompt "^J" zhm_prompt_accept
+bindkey -M hxprompt "^M" zhm_prompt_accept
