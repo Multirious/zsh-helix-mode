@@ -1330,25 +1330,65 @@ function zhm_match_brackets {
 }
 
 function __zhm_select_regex_hook {
-  # region_highlight=
+  setopt localoptions rematchpcre
+
+  local regex="$BUFFER"
+  if [[ -z "$regex" ]]; then
+    ZHM_PRIMARY_CURSOR_IDX=$ZHM_PREV_PRIMARY_CURSOR_IDX
+    zhm_cursors_pos=($zhm_prev_cursors_pos)
+    zhm_cursors_selection_left=($zhm_prev_selection_left)
+    zhm_cursors_selection_right=($zhm_prev_selection_right)
+    zhm_cursors_last_moved_x=($zhm_prev_cursors_last_moved_x)
+    ZHM_HOOK_IKNOWWHATIMDOING=1
+    return
+  fi
+
+  local matches_left=()
+  local matches_right=()
+  for i in {1..$#zhm_prev_selection_left}; do
+    local left=$zhm_prev_selection_left[$i]
+    local right=$zhm_prev_selection_right[$i]
+
+    local string_begin=$((left + 1))
+    local string_end=$((right + 1))
+    while true; do
+      local substring="${ZHM_BUFFER_BEFORE_PROMPT[$string_begin,$string_end]}"
+      if [[ $substring =~ "$regex" ]]; then
+        echo "$MATCH" >> /tmp/zhm_log
+        matches_left+=( $((string_begin + $MBEGIN - 2)) )
+        matches_right+=( $((string_begin + $MEND - 2)) )
+        string_begin=$((string_begin + ${#MATCH}))
+      else
+        break
+      fi
+    done
+  done
+  if (( ${#matches_left} > 0 )); then
+    zhm_cursors_selection_left=($matches_left)
+    zhm_cursors_selection_right=($matches_right)
+    zhm_cursors_pos=($zhm_cursors_selection_right)
+    ZHM_PRIMARY_CURSOR_IDX=1
+    __zhm_update_last_moved
+  else
+    ZHM_PRIMARY_CURSOR_IDX=$ZHM_PREV_PRIMARY_CURSOR_IDX
+    zhm_cursors_pos=($zhm_prev_cursors_pos)
+    zhm_cursors_selection_left=($zhm_prev_selection_left)
+    zhm_cursors_selection_right=($zhm_prev_selection_right)
+    zhm_cursors_last_moved_x=($zhm_prev_cursors_last_moved_x)
+  fi
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_select_regex {
+  ZHM_PREV_PRIMARY_CURSOR_IDX=$ZHM_PRIMARY_CURSOR_IDX
+  zhm_prev_cursors_pos=($zhm_cursors_pos)
+  zhm_prev_selection_left=($zhm_cursors_selection_left)
+  zhm_prev_selection_right=($zhm_cursors_selection_right)
+  zhm_prev_cursors_last_moved_x=($zhm_cursors_last_moved_x)
   local REPLY=
-
   __zhm_prompt "select:" __zhm_select_regex_hook
-
-  echo "$REPLY" >> /tmp/zhm_log
-  
-  # echo "$select" >> /tmp/zhm_log
-  # for i in {1..$#zhm_cursors_pos}; do
-  #   local left=$zhm_cursors_selection_left[$i]
-  #   local right=$zhm_cursors_selection_right[$i]
-  #   local substring="${BUFFER[$((left + 1)),$((right + 1))]}"
-  #   while true; do
-  #     if [[ $substring ~=  ]]
-  #   done
-  # done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_select_all {
