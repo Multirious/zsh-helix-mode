@@ -1472,6 +1472,7 @@ function zhm_extend_line_below {
     if [[ "$BUFFER[$((left + 1))]" == $'\n' ]]; then
       if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
         left=$((MBEGIN - 1))
+        zhm_cursors_selection_left[$i]=$left
       fi
     else
       if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
