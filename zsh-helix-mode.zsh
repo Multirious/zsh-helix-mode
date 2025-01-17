@@ -1750,11 +1750,14 @@ function zhm_paste_after {
 
   local amount_pasted=0
   for i in {1..$#zhm_cursors_pos}; do
-    local content=$(__zhm_read_register "$register" $i)
-
     local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+    zhm_cursors_pos[$i]=$cursor
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$right
+
+    local content=$(__zhm_read_register "$register" $i)
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1785,14 +1788,16 @@ function zhm_paste_before {
 
   local amount_pasted=0
   for i in {1..$#zhm_cursors_pos}; do
-    local content=$(__zhm_read_register "$register" $i)
-
     local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+    zhm_cursors_pos[$i]=$cursor
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$right
+
+    local content=$(__zhm_read_register "$register" $i)
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
-    zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1832,11 +1837,14 @@ function zhm_clipboard_paste_after {
 
   local amount_pasted=0
   for i in {1..$#zhm_cursors_pos}; do
-    local content=$(__zhm_read_register "$register" $i)
-
     local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+    zhm_cursors_pos[$i]=$cursor
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$right
+
+    local content=$(__zhm_read_register "$register" $i)
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1863,14 +1871,16 @@ function zhm_clipboard_paste_before {
 
   local amount_pasted=0
   for i in {1..$#zhm_cursors_pos}; do
-    local content=$(__zhm_read_register "$register" $i)
-
     local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+    zhm_cursors_pos[$i]=$cursor
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$right
+
+    local content=$(__zhm_read_register "$register" $i)
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
-    zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1887,20 +1897,38 @@ function zhm_clipboard_paste_before {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
-# not updated
 function zhm_insert_register {
   local register="${KEYS:1}"
-  local content=$(__zhm_read_register "$register")
 
-  local prev_cursor=$CURSOR
-  BUFFER="${BUFFER:0:$((CURSOR))}$content${BUFFER:$((CURSOR))}"
+  local amount_pasted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$((zhm_cursors_pos[$i] + amount_pasted))
+    local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
+    local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
+    zhm_cursors_pos[$i]=$cursor
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$right
 
-  if (( prev_cursor == ZHM_SELECTION_LEFT )); then
-    ZHM_SELECTION_LEFT=$((ZHM_SELECTION_LEFT + ${#content}))
-  fi
-  CURSOR=$((CURSOR + ${#content}))
+    local content=$(__zhm_read_register "$register" $i)
+
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
+
+    if (( cursor == left )); then
+      zhm_cursors_selection_left[$i]=$((left + ${#content}))
+      zhm_cursors_selection_right[$i]=$((right + ${#content}))
+      zhm_cursors_pos[$i]=$((cursor + ${#content}))
+    elif (( (cursor - 1) == right )); then
+      zhm_cursors_selection_right[$i]=$((right + ${#content}))
+      zhm_cursors_pos[$i]=$((cursor + ${#content}))
+    fi
+    
+    amount_pasted=$((amount_pasted + ${#content}))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_region_highlight
   __zhm_update_last_moved
-  ZHM_SELECTION_RIGHT=$((ZHM_SELECTION_RIGHT + ${#content}))
 }
 
 function zhm_self_insert {
