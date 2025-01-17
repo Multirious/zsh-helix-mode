@@ -153,7 +153,10 @@ function __zhm_update_region_highlight {
 
     if (( cursor == left && cursor == right )); then
       continue
-    elif (( cursor == left )); then
+    elif (( cursor == left )) && [[ $ZHM_MODE != insert ]]; then
+      # ZHM_MODE != insert is necessary to have proper highlighting when
+      # cursor is a bar
+      # This is hardcoded. No one is going to use a bar for other mode.. right?
       left=$((left + 1))
     elif (( cursor == right )); then
       right=$((right - 1))
