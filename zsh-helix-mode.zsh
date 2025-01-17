@@ -133,15 +133,18 @@ function __zhm_user_specified_register {
 
 function __zhm_update_region_highlight {
   region_highlight=(
-    ${region_highlight:#*memo=zhm_highlight}
+    ${region_highlight:#*memo=zsh-helix-mode}
   )
-  region_highlight=(
-    ${region_highlight:#*memo=zhm_prompt_highlight}
-  )
+
+  local prefix=""
+  if (( ZHM_IN_PROMPT == 1 )); then
+    prefix="P"
+  fi
+
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$(( zhm_cursors_selection_right[i] + 1 ))
-    local highlight="$left $right $ZHM_STYLE_SELECTION memo=zhm_highlight"
+    local highlight="$left $right $ZHM_STYLE_SELECTION memo=zsh-helix-mode"
     region_highlight+=("$highlight")
   done
 
@@ -163,7 +166,7 @@ function __zhm_update_region_highlight {
         style="$ZHM_STYLE_OTHER_CURSOR_INSERT"
         ;;
     esac
-    region_highlight+=("$cursor $cursor_right $style memo=zhm_highlight")
+    region_highlight+=("$cursor $cursor_right $style memo=zsh-helix-mode")
   done
 }
 
@@ -391,13 +394,13 @@ $prompt"
   BUFFER=""
 
   zhm_prompt_region_highlight=(
-    "${(@)region_highlight:#*memo=zhm_highlight}"
+    "${(@)region_highlight:#*memo=zsh-helix-mode}"
   )
   zhm_prompt_region_highlight=(
     "${(@)zhm_prompt_region_highlight/#/P}"
   )
   zhm_prompt_region_highlight=(
-    "${(@)zhm_prompt_region_highlight/memo=*/memo=zhm_prompt_highlight}"
+    "${(@)zhm_prompt_region_highlight/memo=*/memo=zsh-helix-mode}"
   )
   region_highlight=()
 
