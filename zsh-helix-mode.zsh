@@ -1667,6 +1667,38 @@ function zhm_delete {
   __zhm_update_region_highlight
 }
 
+function zhm_shell_pipe {
+  local REPLY=
+  __zhm_prompt "pipe:"
+  local command="$REPLY"
+
+  __zhm_update_changes_history_pre
+  
+  local amount_modified=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$(( zhm_cursors_pos[i] + amount_modified ))
+    local left=$(( zhm_cursors_selection_left[i] + amount_modified ))
+    local right=$(( zhm_cursors_selection_right[i] + amount_modified ))
+    local content="${BUFFER[$((left + 1)),$((right + 1))]}"
+    local result="$(printf '%s\n' "$content" | eval $command 2>&1 )"
+    BUFFER="${BUFFER:0:$left}$result${BUFFER:$((right + 1))}"
+    local diff=$((${#result} - ${#content}))
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$((right + diff))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_modified=$((amount_modified + diff))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
 function zhm_undo {
   if (( ZHM_CHANGES_HISTORY_IDX > 1 )); then
     ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX - 1))
@@ -2149,6 +2181,7 @@ zle -N zhm_append
 zle -N zhm_change
 zle -N zhm_replace
 zle -N zhm_delete
+zle -N zhm_shell_pipe
 zle -N zhm_undo
 zle -N zhm_redo
 
@@ -2347,6 +2380,7 @@ for char in {" ".."~"}; do
   bindkey -M hxnor "r$char" zhm_replace
 done
 bindkey -M hxnor d zhm_delete
+bindkey -M hxnor "|" zhm_shell_pipe
 bindkey -M hxnor u zhm_undo
 bindkey -M hxnor U zhm_redo
 
