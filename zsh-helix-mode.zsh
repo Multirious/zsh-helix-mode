@@ -1499,10 +1499,6 @@ function zhm_extend_line_below {
   __zhm_update_region_highlight
 }
 
-function zhm_copy_selection_on_next_line {
-  
-}
-
 function zhm_normal {
   if [[ $ZHM_MODE == insert ]]; then
     for i in {1..$#zhm_cursors_pos}; do
@@ -2133,7 +2129,6 @@ zle -N zhm_select_long_word_inner
 zle -N zhm_select_long_word_around
 zle -N zhm_select_surround_pair_inner
 zle -N zhm_select_surround_pair_around
-zle -N zhm_copy_selection_on_next_line
 
 zle -N zhm_select_regex
 zle -N zhm_select_all
@@ -2334,7 +2329,6 @@ bindkey -M hxnor "^[;" zhm_flip_selections
 bindkey -M hxnor "^[:" zhm_ensure_selections_forward
 bindkey -M hxnor x zhm_extend_line_below
 bindkey -M hxnor X zhm_extend_to_line_bounds
-bindkey -M hxnor C zhm_copy_selection_on_next_line
 
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins "^[" zhm_normal
