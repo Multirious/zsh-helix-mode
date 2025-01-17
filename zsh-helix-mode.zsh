@@ -330,7 +330,7 @@ function __zhm_trailing_goto {
   local cursor=$2
 
   if [[ $ZHM_MODE == select ]]; then
-    __zhm_goto $idx $pos
+    __zhm_goto $idx $cursor
 
     return
   fi
