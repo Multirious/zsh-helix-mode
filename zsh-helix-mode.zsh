@@ -1757,7 +1757,7 @@ function zhm_paste_after {
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
-    zhm_cursors_selection_left[$i]=$((right + 1))
+    zhm_cursors_selection_left[$i]=$((left + 1))
     zhm_cursors_selection_right[$i]=$((right + ${#content}))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1791,7 +1791,8 @@ function zhm_paste_before {
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
 
-    BUFFER="${BUFFER:0:$(($left))}$content${BUFFER:$left}"
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
+    zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1825,7 +1826,7 @@ function zhm_clipboard_yank {
 }
 
 function zhm_clipboard_paste_after {
-  register="+"
+  local register="+"
 
   __zhm_update_changes_history_pre
 
@@ -1838,7 +1839,7 @@ function zhm_clipboard_paste_after {
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
-    zhm_cursors_selection_left[$i]=$((right + 1))
+    zhm_cursors_selection_left[$i]=$((left + 1))
     zhm_cursors_selection_right[$i]=$((right + ${#content}))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1868,7 +1869,8 @@ function zhm_clipboard_paste_before {
     local left=$((zhm_cursors_selection_left[$i] + amount_pasted))
     local right=$((zhm_cursors_selection_right[$i] + amount_pasted))
 
-    BUFFER="${BUFFER:0:$(($left))}$content${BUFFER:$left}"
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
+    zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
