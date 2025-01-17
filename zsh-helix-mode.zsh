@@ -147,12 +147,22 @@ function __zhm_update_region_highlight {
   fi
 
   for i in {1..$#zhm_cursors_pos}; do
-    local left=$(( zhm_cursors_selection_left[i] + offset ))
-    local right=$(( zhm_cursors_selection_right[i] + 1 + offset ))
-    if (( zhm_cursors_selection_left[i] != zhm_cursors_selection_right[i] )); then
-      local highlight="$prefix$left $right $ZHM_STYLE_SELECTION memo=zsh-helix-mode"
-      region_highlight+=("$highlight")
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local cursor=$zhm_cursors_pos[$i]
+
+    if (( cursor == left && cursor == right )); then
+      continue
+    elif (( cursor == left )); then
+      left=$((left + 1))
+    elif (( cursor == right )); then
+      right=$((right - 1))
     fi
+
+    left=$(( left + offset ))
+    right=$(( right + 1 + offset ))
+    local highlight="$prefix$left $right $ZHM_STYLE_SELECTION memo=zsh-helix-mode"
+    region_highlight+=("$highlight")
   done
 
   for i in {1..$#zhm_cursors_pos}; do
