@@ -1367,7 +1367,6 @@ function __zhm_select_regex_hook {
     while true; do
       local substring="${ZHM_BUFFER_BEFORE_PROMPT[$string_begin,$string_end]}"
       if [[ $substring =~ "$regex" ]]; then
-        echo "$MATCH" >> /tmp/zhm_log
         matches_left+=( $((string_begin + $MBEGIN - 2)) )
         matches_right+=( $((string_begin + $MEND - 2)) )
         string_begin=$((string_begin + ${#MATCH}))
