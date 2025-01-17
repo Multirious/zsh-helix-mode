@@ -67,9 +67,11 @@ declare -A zhm_registers
 declare -A zhm_registers_max
 
 ZHM_HOOK_IKNOWWHATIMDOING=0
+ZHM_PROMPT_PREDISPLAY_OFFSET=0
 ZHM_IN_PROMPT=0
 ZHM_PROMPT_HOOK=
 zhm_prompt_region_highlight=()
+ZHM_BUFFER_BEFORE_PROMPT=
 
 ZHM_LAST_MOTION=""
 ZHM_LAST_MOTION_CHAR=""
@@ -133,40 +135,59 @@ function __zhm_user_specified_register {
 
 function __zhm_update_region_highlight {
   region_highlight=(
-    ${region_highlight:#*memo=zsh-helix-mode}
+    "${(@)region_highlight:#*memo=zsh-helix-mode}"
+    "${(@)zhm_prompt_region_highlight}"
   )
 
+  local offset=0
   local prefix=""
   if (( ZHM_IN_PROMPT == 1 )); then
     prefix="P"
+    offset=$ZHM_PROMPT_PREDISPLAY_OFFSET
   fi
 
   for i in {1..$#zhm_cursors_pos}; do
-    local left=$zhm_cursors_selection_left[$i]
-    local right=$(( zhm_cursors_selection_right[i] + 1 ))
-    local highlight="$left $right $ZHM_STYLE_SELECTION memo=zsh-helix-mode"
-    region_highlight+=("$highlight")
+    local left=$(( zhm_cursors_selection_left[i] + offset ))
+    local right=$(( zhm_cursors_selection_right[i] + 1 + offset ))
+    if (( zhm_cursors_selection_left[i] != zhm_cursors_selection_right[i] )); then
+      local highlight="$prefix$left $right $ZHM_STYLE_SELECTION memo=zsh-helix-mode"
+      region_highlight+=("$highlight")
+    fi
   done
 
   for i in {1..$#zhm_cursors_pos}; do
-    if (( i == ZHM_PRIMARY_CURSOR_IDX )); then
-      continue
-    fi
-    local cursor="$zhm_cursors_pos[$i]"
-    local cursor_right="$((cursor + 1))"
+    local cursor=$(( zhm_cursors_pos[i] + offset ))
+    local cursor_right=$(( cursor + 1 ))
     local style=
-    case $ZHM_MODE in
-      normal)
-        style="$ZHM_STYLE_OTHER_CURSOR_NORMAL"
-        ;;
-      select)
-        style="$ZHM_STYLE_OTHER_CURSOR_SELECT"
-        ;;
-      insert)
-        style="$ZHM_STYLE_OTHER_CURSOR_INSERT"
-        ;;
-    esac
-    region_highlight+=("$cursor $cursor_right $style memo=zsh-helix-mode")
+    if (( i != ZHM_PRIMARY_CURSOR_IDX )); then
+      case $ZHM_MODE in
+        normal)
+          style="$ZHM_STYLE_OTHER_CURSOR_NORMAL"
+          ;;
+        select)
+          style="$ZHM_STYLE_OTHER_CURSOR_SELECT"
+          ;;
+        insert)
+          style="$ZHM_STYLE_OTHER_CURSOR_INSERT"
+          ;;
+      esac
+    else
+      if (( ZHM_IN_PROMPT == 0 )); then
+        continue
+      fi 
+      case $ZHM_MODE in
+        normal)
+          style="$ZHM_STYLE_CURSOR_NORMAL"
+          ;;
+        select)
+          style="$ZHM_STYLE_CURSOR_SELECT"
+          ;;
+        insert)
+          style="$ZHM_STYLE_CURSOR_INSERT"
+          ;;
+      esac
+    fi
+    region_highlight+=("$prefix$cursor $cursor_right $style memo=zsh-helix-mode")
   done
 }
 
@@ -386,22 +407,40 @@ function __zhm_merge_cursors {
 function __zhm_prompt {
   local prompt="$1"
 
-  local prev_buffer="$BUFFER"
+  ZHM_BUFFER_BEFORE_PROMPT="$BUFFER"
   local prev_cursor="$CURSOR"
 
-  PREDISPLAY="$prev_buffer
+  if (( ZHM_MULTILINE == 0 )); then
+    ZHM_PROMPT_PREDISPLAY_OFFSET=0
+    PREDISPLAY="$ZHM_BUFFER_BEFORE_PROMPT
 $prompt"
+  else
+    ZHM_PROMPT_PREDISPLAY_OFFSET=17
+    PREDISPLAY=" -- MULTILINE --
+$ZHM_BUFFER_BEFORE_PROMPT
+$prompt"
+  fi
+
+
   BUFFER=""
 
-  zhm_prompt_region_highlight=(
-    "${(@)region_highlight:#*memo=zsh-helix-mode}"
-  )
-  zhm_prompt_region_highlight=(
-    "${(@)zhm_prompt_region_highlight/#/P}"
-  )
-  zhm_prompt_region_highlight=(
-    "${(@)zhm_prompt_region_highlight/memo=*/memo=zsh-helix-mode}"
-  )
+  zhm_prompt_region_highlight=()
+  for highlight in $region_highlight; do
+    if [[ $highlight =~ "memo=zsh-helix-mode" ]]; then
+      continue
+    fi
+    if [[ $highlight =~ "([0-9]*) ([0-9]*) " ]]; then
+      local left=$((match[1] + ZHM_PROMPT_PREDISPLAY_OFFSET))
+      local right=$((match[2] + ZHM_PROMPT_PREDISPLAY_OFFSET))
+      highlight="$left $right ${highlight:$MEND}"
+    fi
+
+    highlight="P${highlight/memo=*/memo=zsh-helix-mode}"
+    zhm_prompt_region_highlight+=(
+      "$highlight"
+    )
+  done
+
   region_highlight=()
 
   ZHM_PROMPT_HOOK="$2"
@@ -416,9 +455,14 @@ $prompt"
   ZHM_IN_PROMPT=0
   ZHM_PROMPT_HOOK=
 
-  PREDISPLAY=""
+  if (( ZHM_MULTILINE == 0 )); then
+    PREDISPLAY=""
+  else
+    PREDISPLAY=" -- MULTILINE --
+"
+  fi
   REPLY="$BUFFER"
-  BUFFER="$prev_buffer"
+  BUFFER="$ZHM_BUFFER_BEFORE_PROMPT"
   CURSOR="$prev_cursor"
 
   case $ZHM_MODE in
@@ -1962,14 +2006,17 @@ function zhm_expand_or_complete {
 
 function zhm_prompt_self_insert {
   zle .self-insert
+  __zhm_update_region_highlight
 }
 
 function zhm_prompt_delete_char_backward {
   zle backward-delete-char
+  __zhm_update_region_highlight
 }
 
 function zhm_prompt_accept {
   zle accept-line
+  __zhm_update_region_highlight
 }
 
 # ==============================================================================
@@ -2144,7 +2191,7 @@ function zhm_zle_line_pre_redraw {
     ZHM_PREV_CURSOR=$CURSOR
     ZHM_PREV_MODE=$ZHM_MODE
   else
-    region_highlight=( "${(@)zhm_prompt_region_highlight}" )
+    __zhm_update_region_highlight
     if [[ -n "$ZHM_PROMPT_HOOK" ]]; then
       eval $ZHM_PROMPT_HOOK
     fi
