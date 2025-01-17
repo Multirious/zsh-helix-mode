@@ -1983,7 +1983,6 @@ ${BUFFER:$cursor}"
   __zhm_update_region_highlight
 }
 
-# not updated
 function zhm_multiline {
   if (( ZHM_MULTILINE == 0 )); then
     PREDISPLAY="-- MULTILINE --
@@ -2031,7 +2030,6 @@ function zhm_accept {
   REGION_ACTIVE=0
 }
 
-# not updated
 function zhm_accept_or_insert_newline {
   if (( ZHM_MULTILINE == 1 )); then
     zhm_insert_newline
