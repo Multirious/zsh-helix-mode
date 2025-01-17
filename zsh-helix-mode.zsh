@@ -1675,15 +1675,15 @@ function zhm_undo {
     ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX - 1))
     BUFFER="$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
     local idx=$zhm_changes_history_cursors_idx_starts_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
-    local count=$zhm_changes_history_cursors_count[$((ZHM_CHANGES_HISTORY_IDX + 1))]
+    local count=$zhm_changes_history_cursors_count_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
     zhm_cursors_pos=(
-      $zhm_changes_history_cursors_pos_pre[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_pos_pre[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_selection_left=(
-      $zhm_changes_history_cursors_selection_left_pre[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_selection_left_pre[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_selection_right=(
-      $zhm_changes_history_cursors_selection_right_pre[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_selection_right_pre[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_last_moved_x=("${zhm_cursors_pos[@]}")
     ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))]
@@ -1699,15 +1699,15 @@ function zhm_redo {
     ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX + 1))
     BUFFER="$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
     local idx=$zhm_changes_history_cursors_idx_starts_post[$ZHM_CHANGES_HISTORY_IDX]
-    local count=$zhm_changes_history_cursors_count[$ZHM_CHANGES_HISTORY_IDX]
+    local count=$zhm_changes_history_cursors_count_post[$ZHM_CHANGES_HISTORY_IDX]
     zhm_cursors_pos=(
-      $zhm_changes_history_cursors_pos_post[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_pos_post[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_selection_left=(
-      $zhm_changes_history_cursors_selection_left_post[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_selection_left_post[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_selection_right=(
-      $zhm_changes_history_cursors_selection_right_post[$idx,$((idx + count))]
+      "${(@)zhm_changes_history_cursors_selection_right_post[$idx,$((idx + count - 1))]}"
     )
     zhm_cursors_last_moved_x=("${zhm_cursors_pos[@]}")
     ZHM_PRIMARY_CURSOR_IDX=$zhm_changes_history_primary_cursor_post[$ZHM_CHANGES_HISTORY_IDX]
