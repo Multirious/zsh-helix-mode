@@ -8,13 +8,14 @@ as much as possible.
 Any existing keybindings that *should* reflect the official default Helix keybinds but doesn't are considered bugs.
 
 **Features**
-- Accurate Helix replication. No more switching muscle memory.
+- Accurate Helix replication! No more switching muscle memory.
 - Helix's selection manipulation and movemnt.
 - Match, Goto, Insert, Append, Change, Delete, Replace.
-- Registers.
-- Yank-Paste. For both registers and clipboard.
-- Undo-Redo. And with selection history like Helix's.
-- Multiline mode. Edit long commands right in the prompt. (Basically Helix)
+- Multi-cursor!
+- Registers!
+- Yank-Paste for both registers and clipboard!
+- Undo-Redo! And with selection history like Helix's.
+- Multiline mode. It's Helix editor right in your prompt!
 - Cursor styling. Display different modes with different cursor looks.
 
 ---
