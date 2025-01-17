@@ -2276,33 +2276,6 @@ function zhm_zle_line_pre_redraw {
       eval $ZHM_PROMPT_HOOK
     fi
   fi
-
-  # echo "" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "history $ZHM_CHANGES_HISTORY_IDX" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "pre  start $zhm_changes_history_cursors_idx_starts_pre" >> /tmp/zhm_log
-  # echo "pre  count $zhm_changes_history_cursors_count_pre" >> /tmp/zhm_log
-  # echo "pre  pos   $zhm_changes_history_cursors_pos_pre" >> /tmp/zhm_log
-  # echo "pre  left  $zhm_changes_history_cursors_selection_left_pre" >> /tmp/zhm_log
-  # echo "pre  right $zhm_changes_history_cursors_selection_right_pre" >> /tmp/zhm_log
-  # echo "pre  prim  $zhm_changes_history_primary_cursor_pre" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "post start $zhm_changes_history_cursors_idx_starts_post" >> /tmp/zhm_log
-  # echo "post count $zhm_changes_history_cursors_count_post" >> /tmp/zhm_log
-  # echo "post pos   $zhm_changes_history_cursors_pos_post" >> /tmp/zhm_log
-  # echo "post left  $zhm_changes_history_cursors_selection_left_post" >> /tmp/zhm_log
-  # echo "post right $zhm_changes_history_cursors_selection_right_post" >> /tmp/zhm_log
-  # echo "post prim  $zhm_changes_history_primary_cursor_post" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "curr pos   $zhm_cursors_pos" >> /tmp/zhm_log
-  # echo "curr left  $zhm_cursors_selection_left" >> /tmp/zhm_log
-  # echo "curr right $zhm_cursors_selection_right" >> /tmp/zhm_log
-  # echo "" >> /tmp/zhm_log
-  # echo "${(kv)zhm_registers}" >> /tmp/zhm_log
 }
 
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
