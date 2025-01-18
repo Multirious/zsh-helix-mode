@@ -2256,6 +2256,13 @@ function zhm_zle_line_pre_redraw {
 autoload -Uz add-zle-hook-widget
 add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
 
+function zhm-add-update-region-highlight-hook {
+  function zhm-update-region-highlight {
+    __zhm_update_region_highlight
+  }
+  add-zle-hook-widget zle-line-pre-redraw zhm-update-region-highlight
+}
+
 # Widgets ======================================================================
 
 # Mode

@@ -177,10 +177,6 @@ mitigate the issue, please add the following after you've sourced `zsh-syntax-hi
 
 # source zsh-syntax-highlighting
 
-function update-zhm-highlight {
-  __zhm_update_region_highlight
-}
-
-add-zle-hook-widget zle-line-pre-redraw update-zhm-highlight
+zhm-add-update-region-highlight-hook
 ```
 
