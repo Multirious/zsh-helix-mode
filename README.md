@@ -116,11 +116,6 @@ that basically means "reset, block cursor, pastel red".
 - By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSI escape sequences<br/>
 that basically means "reset, vertical blinking cursor, white".
 
-This plugin is currently an extension to ZLE. It uses ZLE's marking/highlighting feature to implement
-selection which ZLE also provided some variables for stylign.
-
-todo
-
 ### Behavior
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
