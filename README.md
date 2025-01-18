@@ -145,7 +145,8 @@ The register `%` is changed to `pwd` instead of current file in Helix.
 ### Compatibility
 
 #### [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping)
-If you wish to use zsh-autosuggestions with this plugin, you can add the following configurations below:
+For `zsh-autosuggestions` to work with `zsh-helix-mode` you must configure `zsh-autosuggestions`
+to use widgets implemented by this plugin:
 ```zsh
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(
   zhm_history_prev
@@ -159,8 +160,27 @@ ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS+=(
   zhm_move_next_word_end
 )
 ```
-More details can be seen [here](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping).
+More details [here](https://github.com/zsh-users/zsh-autosuggestions?tab=readme-ov-file#widget-mapping).
 
-This configuration has one caveat and that is partial accepting using `zhm_move_next_word_start` or `zhm_move_next_word_end`
+This still have some issues and that is partial accepting using `zhm_move_next_word_start` or `zhm_move_next_word_end`
 will leave one last character unaccepted which some can considered them undesirable/annoying (I know I am).
 Please submit an issue/PR if you have a solution!
+
+#### [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
+Due to how `zsh-syntax-highlighting` works,
+[you must source the plugin after `zsh-helix-mode`](https://github.com/zsh-users/zsh-syntax-highlighting?tab=readme-ov-file#why-must-zsh-syntax-highlightingzsh-be-sourced-at-the-end-of-the-zshrc-file).
+
+`zsh-syntax-highlighting` can override `zsh-helix-mode`'s highlighting. To
+mitigate the issue, please add the following after you've sourced `zsh-syntax-highlighting`:
+```
+# source zsh-helix-mode
+
+# source zsh-syntax-highlighting
+
+function redraw-zhm-highlight {
+  __zhm_update_region_highlight
+}
+
+add-zle-hook-widget zle-line-pre-redraw redraw-zhm-highlight
+```
+
