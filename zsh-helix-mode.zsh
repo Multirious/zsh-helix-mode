@@ -66,6 +66,7 @@ zhm_cursors_last_moved_x=(0)
 declare -A zhm_registers
 declare -A zhm_registers_max
 
+ZHM_ACCEPTING=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
 ZHM_PROMPT_PREDISPLAY_OFFSET=0
 ZHM_IN_PROMPT=0
@@ -2054,6 +2055,7 @@ function zhm_delete_char_backward {
 
 function zhm_accept {
   zle accept-line
+  ZHM_ACCEPTING=1
 }
 
 function zhm_accept_or_insert_newline {
@@ -2230,6 +2232,8 @@ function zhm_precmd {
   zhm_changes_history_cursors_selection_right_post=(0)
   zhm_changes_history_primary_cursor_post=(1)
 
+  ZHM_ACCEPTING=0
+
   case $ZHM_MODE in
     insert)
       printf "$ZHM_CURSOR_INSERT"
@@ -2243,9 +2247,6 @@ function zhm_precmd {
 
 function zhm_preexec {
   printf "$ZHM_CURSOR_NORMAL"
-  region_highlight=(
-    "${(@)region_highlight:#*memo=zsh-helix-mode}"
-  )
   # Forcing zle to append current command as the latest command
   # If this isn't used, zle would just append the line after current history index
   # (not the latest command) which is quite unintuitive
@@ -2258,6 +2259,13 @@ preexec_functions+=(zhm_preexec)
 
 function zhm_zle_line_pre_redraw {
   # Keeps selection range in check
+
+  if (( ZHM_ACCEPTING == 1)); then
+    region_highlight=(
+      ${region_highlight:#*memo=zsh-helix-mode}
+    )
+    return
+  fi
 
   if (( ZHM_IN_PROMPT == 0 )); then
     if (( ZHM_HOOK_IKNOWWHATIMDOING == 0 )); then
