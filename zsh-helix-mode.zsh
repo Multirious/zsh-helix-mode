@@ -2054,8 +2054,6 @@ function zhm_delete_char_backward {
 
 function zhm_accept {
   zle accept-line
-  MARK=
-  REGION_ACTIVE=0
 }
 
 function zhm_accept_or_insert_newline {
@@ -2245,7 +2243,9 @@ function zhm_precmd {
 
 function zhm_preexec {
   printf "$ZHM_CURSOR_NORMAL"
-  REGION_ACTIVE=0
+  region_highlight=(
+    "${(@)region_highlight:#*memo=zsh-helix-mode}"
+  )
   # Forcing zle to append current command as the latest command
   # If this isn't used, zle would just append the line after current history index
   # (not the latest command) which is quite unintuitive
