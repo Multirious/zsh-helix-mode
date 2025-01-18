@@ -613,6 +613,43 @@ function zhm_change {
   __zhm_update_region_highlight
 }
 
+function zhm_command_mode {
+  local REPLY=
+  __zhm_prompt ":"
+  local command=(${=REPLY})
+
+  if (( ${#command} == 0  )); then
+    return
+  fi
+
+  echo "$command" >> /tmp/zhm_log
+
+  case "${command[1]}" in
+    "o" | "open")
+      if (( ${#command} <= 1  )); then
+        return
+      fi
+      local content=
+      content="$(cat "${command[2]}" 2>&1)"
+      if (( $? != 0 )); then
+        zle -M "$content"
+        return
+      fi
+      __zhm_update_changes_history_pre
+      BUFFER="$content"
+      CURSOR=0
+      zhm_cursors_pos=(0)
+      zhm_cursors_selection_left=(0)
+      zhm_cursors_selection_right=(0)
+      zhm_cursors_last_moved_x=(0)
+      __zhm_update_changes_history_post
+      ;;
+    *)
+      zle -M "Unknown command"
+  esac
+
+}
+
 # Movement =====================================================================
 
 function zhm_move_left {
@@ -2274,6 +2311,7 @@ zle -N zhm_insert_at_line_start
 zle -N zhm_insert_at_line_end
 zle -N zhm_append
 zle -N zhm_change
+zle -N zhm_command_mode
 
 # Movement
 zle -N zhm_move_left
@@ -2422,6 +2460,7 @@ bindkey -M hxnor "^[^J" zhm_multiline
 # Other keys is available inside `Normal/<minor mode>` sections.
 
 bindkey -M hxnor v zhm_select
+bindkey -M hxnor ":" zhm_command_mode
 
 # Normal/Goto ------------------------------------------------------------------
 bindkey -M hxnor gg zhm_goto_first_line
