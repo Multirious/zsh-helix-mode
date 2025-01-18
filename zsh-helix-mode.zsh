@@ -429,7 +429,7 @@ function __zhm_prompt {
 $prompt"
   else
     ZHM_PROMPT_PREDISPLAY_OFFSET=17
-    PREDISPLAY=" -- MULTILINE --
+    PREDISPLAY="-- MULTILINE --
 $ZHM_BUFFER_BEFORE_PROMPT
 $prompt"
   fi
