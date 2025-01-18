@@ -472,7 +472,7 @@ $prompt"
   if (( ZHM_MULTILINE == 0 )); then
     PREDISPLAY=""
   else
-    PREDISPLAY=" -- MULTILINE --
+    PREDISPLAY="-- MULTILINE --
 "
   fi
   REPLY="$BUFFER"
