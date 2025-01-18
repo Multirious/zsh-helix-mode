@@ -137,10 +137,19 @@ or `wl-paste --no-newline` if the `WAYLAND_DISPLAY` environment variable is foun
 otherwise it is empty.
 
 Some keys are custom to this plugin and not presented in Helix.
-- `Alt-Enter` for enabling and disabling multiline mode for both Insert and Normal mode.
-- `Ctrl-p` and `Ctrl-n` in Normal mode for previous and next command histroy. By default, `j` and `k` can change history too.
+- `Alt-Enter` in normal and insert mode for toggling [multi-line mode](#multi-line-mode).
+- `Ctrl-p` and `Ctrl-n` in normal and insert mode for moving in the command history. 
 
 The register `%` is changed to `pwd` instead of current file in Helix.
+
+### Multi-line mode
+By pressing `Alt-Enter`, the editor will be switched to multi-line mode.
+In this mode, a message `-- MULTILINE --` with a newline is prepended to your
+commandline to ensure your first line in the buffer is at the same level
+to any other lines. Pressing `Enter` key in insert mode will add a newline
+at your cursor instead of accepting the command. However, pressing `Enter`
+key in normal mode is the same; it will accepts the current command as usual.
+Other keys will behave the same.
 
 ### Compatibility
 
