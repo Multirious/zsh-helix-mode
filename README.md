@@ -11,11 +11,9 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 - Accurate Helix replication! No more switching muscle memory.
 - Helix's selection manipulation and movemnt.
 - Match, Goto, Insert, Append, Change, Delete, Replace.
-- Multi-cursor!
-- Registers!
+- Multi-cursor, Registers, Shell Pipe, Command mode!
 - Yank-Paste for both registers and clipboard!
 - Undo-Redo! And with selection history like Helix's.
-- Prompts! Such as select regex matches (with feedback!) or shell pipe.
 - Multi-line mode. It's Helix editor right in your prompt!
 - Cursor styling. Display different modes with different cursor looks.
 
