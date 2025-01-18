@@ -172,7 +172,7 @@ Due to how `zsh-syntax-highlighting` works,
 
 `zsh-syntax-highlighting` can override `zsh-helix-mode`'s highlighting. To
 mitigate the issue, please add the following after you've sourced `zsh-syntax-highlighting`:
-```
+```zsh
 # source zsh-helix-mode
 
 # source zsh-syntax-highlighting
