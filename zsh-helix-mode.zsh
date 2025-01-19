@@ -1494,6 +1494,96 @@ function zhm_rotate_selections_forward {
   __zhm_update_region_highlight
 }
 
+function zhm_rotate_selection_contents_backward {
+  local original_side=()
+  local contents=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    contents+=("${BUFFER[$((left + 1)),$((right + 1))]}")
+    if (( cursor == right )); then
+      original_side+=(right)
+    else
+      original_side+=(left)
+    fi
+  done
+
+  local amount_modified=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$(( zhm_cursors_selection_left[i] + amount_modified ))
+    local right=$(( zhm_cursors_selection_right[i] + amount_modified ))
+
+    local backward_idx=$((i + 1 <= ${#zhm_cursors_pos} ? (i + 1) : 1 ))
+    local content="${contents[$backward_idx]}"
+
+    local prev_content_len=$((right - left + 1))
+
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$((right + 1))}"
+    local diff=$((${#content} - prev_content_len))
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$((right + diff))
+    case "$original_side[$backward_idx]" in
+      left)
+        zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+        ;;
+      right)
+        zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+        ;;
+    esac
+    amount_modified=$((amount_modified + diff))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_region_highlight
+}
+
+function zhm_rotate_selection_contents_forward {
+  local original_side=()
+  local contents=()
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    contents+=("${BUFFER[$((left + 1)),$((right + 1))]}")
+    if (( cursor == right )); then
+      original_side+=(right)
+    else
+      original_side+=(left)
+    fi
+  done
+
+  local amount_modified=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$(( zhm_cursors_selection_left[i] + amount_modified ))
+    local right=$(( zhm_cursors_selection_right[i] + amount_modified ))
+
+    local forward_idx=$((i - 1 >= 1 ? (i - 1) : ${#zhm_cursors_pos}))
+    local content="${contents[$forward_idx]}"
+
+    local prev_content_len=$((right - left + 1))
+
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$((right + 1))}"
+    local diff=$((${#content} - prev_content_len))
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$((right + diff))
+    case "$original_side[$forward_idx]" in
+      left)
+        zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+        ;;
+      right)
+        zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+        ;;
+    esac
+    amount_modified=$((amount_modified + diff))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_region_highlight
+}
+
 function zhm_select_all {
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -2456,6 +2546,8 @@ zle -N zhm_keep_primary_selection
 zle -N zhm_remove_primary_selection
 zle -N zhm_rotate_selections_backward
 zle -N zhm_rotate_selections_forward
+zle -N zhm_rotate_selection_contents_backward
+zle -N zhm_rotate_selection_contents_forward
 zle -N zhm_select_all
 zle -N zhm_extend_line_below
 zle -N zhm_extend_to_line_bounds
@@ -2553,6 +2645,8 @@ bindkey -M hxnor "," zhm_keep_primary_selection
 bindkey -M hxnor "^[," zhm_remove_primary_selection
 bindkey -M hxnor "(" zhm_rotate_selections_backward
 bindkey -M hxnor ")" zhm_rotate_selections_forward
+bindkey -M hxnor "^[(" zhm_rotate_selection_contents_backward
+bindkey -M hxnor "^[)" zhm_rotate_selection_contents_forward
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor x zhm_extend_line_below
 bindkey -M hxnor X zhm_extend_to_line_bounds
