@@ -1450,6 +1450,14 @@ function zhm_ensure_selections_forward {
   __zhm_update_region_highlight
 }
 
+function zhm_keep_primary_selection {
+  zhm_cursors_pos=( $zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX] )
+  zhm_cursors_selection_left=( $zhm_cursors_selection_left[$ZHM_PRIMARY_CURSOR_IDX] )
+  zhm_cursors_selection_right=( $zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX] )
+  zhm_cursors_last_moved_x=( $zhm_cursors_last_moved_x[$ZHM_PRIMARY_CURSOR_IDX] )
+  __zhm_update_region_highlight
+}
+
 function zhm_select_all {
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -2408,6 +2416,7 @@ zle -N zhm_select_regex
 zle -N zhm_collapse_selection
 zle -N zhm_flip_selections
 zle -N zhm_ensure_selections_forward
+zle -N zhm_keep_primary_selection
 zle -N zhm_select_all
 zle -N zhm_extend_line_below
 zle -N zhm_extend_to_line_bounds
@@ -2501,6 +2510,7 @@ bindkey -M hxnor s zhm_select_regex
 bindkey -M hxnor \; zhm_collapse_selection
 bindkey -M hxnor "^[;" zhm_flip_selections
 bindkey -M hxnor "^[:" zhm_ensure_selections_forward
+bindkey -M hxnor "," zhm_keep_primary_selection
 bindkey -M hxnor % zhm_select_all
 bindkey -M hxnor x zhm_extend_line_below
 bindkey -M hxnor X zhm_extend_to_line_bounds
