@@ -1125,6 +1125,9 @@ function zhm_paste_after {
     zhm_cursors_selection_right[$i]=$right
 
     local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1159,6 +1162,9 @@ function zhm_clipboard_paste_after {
     zhm_cursors_selection_right[$i]=$right
 
     local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1191,6 +1197,9 @@ function zhm_paste_before {
     zhm_cursors_selection_right[$i]=$right
 
     local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
@@ -1224,6 +1233,9 @@ function zhm_clipboard_paste_before {
     zhm_cursors_selection_right[$i]=$right
 
     local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
