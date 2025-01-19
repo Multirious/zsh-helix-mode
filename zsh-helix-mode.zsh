@@ -1468,6 +1468,7 @@ function zhm_remove_primary_selection {
   zhm_cursors_last_moved_x[$ZHM_PRIMARY_CURSOR_IDX]=()
   ZHM_PRIMARY_CURSOR_IDX=$(( ZHM_PRIMARY_CURSOR_IDX <= ${#zhm_cursors_pos} ? ZHM_PRIMARY_CURSOR_IDX : ${#zhm_cursors_pos} ))
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  ZHM_HOOK_IKNOWWHATIMDOING=1
   __zhm_update_region_highlight
 }
 
