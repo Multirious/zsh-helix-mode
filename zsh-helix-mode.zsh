@@ -1196,7 +1196,7 @@ function zhm_paste_after {
     fi
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
-    zhm_cursors_selection_left[$i]=$((left + 1))
+    zhm_cursors_selection_left[$i]=$((right + 1))
     zhm_cursors_selection_right[$i]=$((right + ${#content}))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
@@ -1231,7 +1231,7 @@ function zhm_clipboard_paste_after {
     fi
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
-    zhm_cursors_selection_left[$i]=$((left + 1))
+    zhm_cursors_selection_left[$i]=$((right + 1))
     zhm_cursors_selection_right[$i]=$((right + ${#content}))
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
