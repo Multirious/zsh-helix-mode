@@ -1097,15 +1097,13 @@ function zhm_yank {
 }
 
 function zhm_clipboard_yank {
-  register="+"
-
   local content=()
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$zhm_cursors_selection_right[$i]
     content+="${BUFFER[$((left + 1)),$((right + 1))]}"
   done
-  __zhm_write_register "$ZHM_CURRENT_REGISTER" "$content[@]"
+  __zhm_write_register "+" "$content[@]"
 
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
@@ -1148,8 +1146,6 @@ function zhm_paste_after {
 }
 
 function zhm_clipboard_paste_after {
-  local register="+"
-
   __zhm_update_changes_history_pre
 
   local amount_pasted=0
@@ -1161,7 +1157,7 @@ function zhm_clipboard_paste_after {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    local content=$(__zhm_read_register "+" $i)
     if [[ -z "$content" ]]; then
       continue
     fi
@@ -1219,8 +1215,6 @@ function zhm_paste_before {
 }
 
 function zhm_clipboard_paste_before {
-  local register="+"
-
   __zhm_update_changes_history_pre
 
   local amount_pasted=0
@@ -1232,7 +1226,7 @@ function zhm_clipboard_paste_before {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    local content=$(__zhm_read_register "+" $i)
     if [[ -z "$content" ]]; then
       continue
     fi
