@@ -1445,7 +1445,7 @@ function zhm_flip_selections {
 }
 
 function zhm_ensure_selections_forward {
-  zhm_cursors_pos=("$zhm_cursors_selection_righ[@]")
+  zhm_cursors_pos=("$zhm_cursors_selection_right[@]")
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
