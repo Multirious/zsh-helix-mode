@@ -73,6 +73,9 @@ ZHM_BUFFER_BEFORE_PROMPT=
 ZHM_LAST_MOTION=""
 ZHM_LAST_MOTION_CHAR=""
 
+ZHM_CURRENT_REGISTER="\""
+ZHM_JUST_SELECTED_REGISTER=0
+
 # Private functions ============================================================
 
 function __zhm_read_register {
@@ -120,15 +123,6 @@ function __zhm_write_register {
       ;;
   esac
 }
-
-function __zhm_user_specified_register {
-  if [[ $KEYS =~ "^\"(.).*" ]]; then
-    print "$match[1]"
-    return 0
-  else
-    return 1
-  fi
- }
 
 function __zhm_update_region_highlight {
   region_highlight=(
@@ -576,19 +570,13 @@ function zhm_append {
 }
 
 function zhm_change {
-  local register=
-  register="$(__zhm_user_specified_register)"
-  if (( $? != 0 )); then
-    register="\""
-  fi
-
   local content=()
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$zhm_cursors_selection_right[$i]
     content+="${BUFFER[$((left + 1)),$((right + 1))]}"
   done
-  __zhm_write_register "$register" "$content[@]"
+  __zhm_write_register "$ZHM_CURRENT_REGISTER" "$content[@]"
 
   __zhm_update_changes_history_pre
 
@@ -996,19 +984,13 @@ function zhm_repeat_last_motion {
 # Changes ======================================================================
 
 function zhm_delete {
-  local register=
-  register="$(__zhm_user_specified_register)"
-  if (( $? != 0 )); then
-    register="\""
-  fi
-
   local content=()
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$zhm_cursors_selection_right[$i]
     content+="${BUFFER[$((left + 1)),$((right + 1))]}"
   done
-  __zhm_write_register "$register" "$content[@]"
+  __zhm_write_register "$ZHM_CURRENT_REGISTER" "$content[@]"
 
   __zhm_update_changes_history_pre
 
@@ -1101,19 +1083,13 @@ function zhm_redo {
 }
 
 function zhm_yank {
-  local register=
-  register="$(__zhm_user_specified_register)"
-  if (( $? != 0 )); then
-    register="\""
-  fi
-
   local content=()
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$zhm_cursors_selection_right[$i]
     content+="${BUFFER[$((left + 1)),$((right + 1))]}"
   done
-  __zhm_write_register "$register" "$content[@]"
+  __zhm_write_register "$ZHM_CURRENT_REGISTER" "$content[@]"
 
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
@@ -1129,7 +1105,7 @@ function zhm_clipboard_yank {
     local right=$zhm_cursors_selection_right[$i]
     content+="${BUFFER[$((left + 1)),$((right + 1))]}"
   done
-  __zhm_write_register "$register" "$content[@]"
+  __zhm_write_register "$ZHM_CURRENT_REGISTER" "$content[@]"
 
   if [[ $ZHM_MODE == "select" ]]; then
     __zhm_mode_normal
@@ -1137,12 +1113,6 @@ function zhm_clipboard_yank {
 }
 
 function zhm_paste_after {
-  local register=
-  register="$(__zhm_user_specified_register)"
-  if (( $? != 0 )); then
-    register="\""
-  fi
-
   __zhm_update_changes_history_pre
 
   local amount_pasted=0
@@ -1154,7 +1124,7 @@ function zhm_paste_after {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$register" $i)
+    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1188,7 +1158,7 @@ function zhm_clipboard_paste_after {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$register" $i)
+    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
 
     BUFFER="${BUFFER:0:$(($right + 1))}$content${BUFFER:$((right + 1))}"
     zhm_cursors_selection_left[$i]=$((left + 1))
@@ -1209,12 +1179,6 @@ function zhm_clipboard_paste_after {
 }
 
 function zhm_paste_before {
-  local register=
-  register="$(__zhm_user_specified_register)"
-  if (( $? != 0 )); then
-    register="\""
-  fi
-
   __zhm_update_changes_history_pre
 
   local amount_pasted=0
@@ -1226,7 +1190,7 @@ function zhm_paste_before {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$register" $i)
+    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
@@ -1259,7 +1223,7 @@ function zhm_clipboard_paste_before {
     zhm_cursors_selection_left[$i]=$left
     zhm_cursors_selection_right[$i]=$right
 
-    local content=$(__zhm_read_register "$register" $i)
+    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
 
     BUFFER="${BUFFER:0:$left}$content${BUFFER:$left}"
     zhm_cursors_selection_right[$i]=$((left + ${#content} - 1))
@@ -1276,6 +1240,15 @@ function zhm_clipboard_paste_before {
   __zhm_update_region_highlight
   __zhm_update_last_moved
   ZHM_HOOK_IKNOWWHATIMDOING=1
+}
+
+function zhm_select_register {
+  local register="${KEYS:1}"
+  if [[ -z "$register" ]]; then
+    return
+  fi
+  ZHM_CURRENT_REGISTER="$register"
+  ZHM_JUST_SELECTED_REGISTER=1
 }
 
 # Shell ========================================================================
@@ -2282,6 +2255,12 @@ function zhm_zle_line_pre_redraw {
     ZHM_HOOK_IKNOWWHATIMDOING=0
     ZHM_PREV_CURSOR=$CURSOR
     ZHM_PREV_MODE=$ZHM_MODE
+    if (( ZHM_JUST_SELECTED_REGISTER == 0 )); then
+      ZHM_CURRENT_REGISTER="\""
+    else
+      ZHM_JUST_SELECTED_REGISTER=0
+    fi
+  
   else
     __zhm_update_region_highlight
     if [[ -n "$ZHM_PROMPT_HOOK" ]]; then
@@ -2343,6 +2322,7 @@ zle -N zhm_paste_after
 zle -N zhm_clipboard_paste_after
 zle -N zhm_paste_before
 zle -N zhm_clipboard_paste_before
+zle -N zhm_select_register
 
 # Shell
 zle -N zhm_shell_pipe
@@ -2433,11 +2413,7 @@ bindkey -M hxnor P zhm_paste_before
 bindkey -M hxnor d zhm_delete
 bindkey -M hxnor c zhm_change
 for char in {" ".."~"}; do
-  bindkey -M hxnor "\"${char}p" zhm_paste_after
-  bindkey -M hxnor "\"${char}P" zhm_paste_before
-  bindkey -M hxnor "\"${char}d" zhm_delete
-  bindkey -M hxnor "\"${char}c" zhm_change
-  bindkey -M hxnor "\"${char}y" zhm_yank
+  bindkey -M hxnor "\"$char" zhm_select_register
 done
 
 # Normal: Shell ----------------------------------------------------------------
