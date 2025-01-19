@@ -1034,6 +1034,74 @@ function zhm_replace {
   __zhm_update_changes_history_post
 }
 
+function zhm_replace_with_yanked {
+  __zhm_update_changes_history_pre
+  
+  local amount_modified=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$(( zhm_cursors_pos[i] + amount_modified ))
+    local left=$(( zhm_cursors_selection_left[i] + amount_modified ))
+    local right=$(( zhm_cursors_selection_right[i] + amount_modified ))
+
+    local content=$(__zhm_read_register "$ZHM_CURRENT_REGISTER" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
+
+    local prev_content_len=$((right - left + 1))
+
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$((right + 1))}"
+    local diff=$((${#content} - prev_content_len))
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$((right + diff))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_modified=$((amount_modified + diff))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
+function zhm_replace_selections_with_clipboard {
+  __zhm_update_changes_history_pre
+  
+  local amount_modified=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$(( zhm_cursors_pos[i] + amount_modified ))
+    local left=$(( zhm_cursors_selection_left[i] + amount_modified ))
+    local right=$(( zhm_cursors_selection_right[i] + amount_modified ))
+
+    local content=$(__zhm_read_register "+" $i)
+    if [[ -z "$content" ]]; then
+      continue
+    fi
+
+    local prev_content_len=$((right - left + 1))
+
+    BUFFER="${BUFFER:0:$left}$content${BUFFER:$((right + 1))}"
+    local diff=$((${#content} - prev_content_len))
+    zhm_cursors_selection_left[$i]=$left
+    zhm_cursors_selection_right[$i]=$((right + diff))
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+    amount_modified=$((amount_modified + diff))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  __zhm_update_changes_history_post
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
 function zhm_undo {
   if (( ZHM_CHANGES_HISTORY_IDX > 1 )); then
     ZHM_CHANGES_HISTORY_IDX=$((ZHM_CHANGES_HISTORY_IDX - 1))
@@ -2320,6 +2388,8 @@ zle -N zhm_repeat_last_motion
 # Changes
 zle -N zhm_delete
 zle -N zhm_replace
+zle -N zhm_replace_with_yanked
+zle -N zhm_replace_selections_with_clipboard
 zle -N zhm_undo
 zle -N zhm_redo
 zle -N zhm_yank
@@ -2407,6 +2477,7 @@ bindkey -M hxnor "^[." zhm_repeat_last_motion
 for char in {" ".."~"}; do
   bindkey -M hxnor "r$char" zhm_replace
 done
+bindkey -M hxnor "R" zhm_replace_with_yanked
 bindkey -M hxnor i zhm_insert
 bindkey -M hxnor a zhm_append
 bindkey -M hxnor I zhm_insert_at_line_start
@@ -2470,6 +2541,7 @@ bindkey -M hxnor 'maW' zhm_select_long_word_around
 bindkey -M hxnor ' y' zhm_clipboard_yank
 bindkey -M hxnor ' p' zhm_clipboard_paste_after
 bindkey -M hxnor ' P' zhm_clipboard_paste_before
+bindkey -M hxnor ' R' zhm_replace_selections_with_clipboard
 
 # Insert -----------------------------------------------------------------------
 # bindkey -M hxins "jk" zhm_normal
