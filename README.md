@@ -9,7 +9,7 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 
 **Features**
 - Accurate Helix replication! No more switching muscle memory.
-- Helix's selection manipulation and movemnt.
+- Helix's selection manipulation and movement.
 - Match, Goto, Insert, Append, Change, Delete, Replace.
 - Multi-cursor, Registers, Shell Pipe, Command mode!
 - Yank-Paste for both registers and clipboard!
