@@ -29,8 +29,9 @@ Any existing keybindings that *should* reflect the official default Helix keybin
   - [Nix (flake)](#nix-flake)
 - [Configurations](#configurations)
   - [Styling](#styling)
-  - [Behavior](#behavior)
+  - [Clipboard](#clipboard)
   - [Compatibility](#compatibility)
+- [Plugin Specifics](#plugin-specifics)
 
 ## Installation
 
@@ -115,7 +116,7 @@ that basically means "reset, block cursor, pastel red".
 - By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSI escape sequences<br/>
 that basically means "reset, vertical blinking cursor, white".
 
-### Behavior
+### Clipboard
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
 - System yanked content will be piped to the command in this variable.
@@ -129,21 +130,6 @@ otherwise it is empty.
 - By default, it is `xclip -o -sel clip` if the `DISPLAY` environment variable is found,<br/>
 or `wl-paste --no-newline` if the `WAYLAND_DISPLAY` environment variable is found,<br/>
 otherwise it is empty.
-
-Some keys are custom to this plugin and not presented in Helix.
-- `Alt-Enter` in normal and insert mode for toggling [multi-line mode](#multi-line-mode).
-- `Ctrl-p` and `Ctrl-n` in normal and insert mode for moving in the command history. 
-
-The register `%` is changed to `pwd` instead of current file in Helix.
-
-### Multi-line mode
-By pressing `Alt-Enter`, the editor will be switched to multi-line mode.
-In this mode, a message `-- MULTILINE --` with a newline is prepended to your
-commandline to ensure your first line in the buffer is at the same level
-to any other lines. Pressing `Enter` key in insert mode will add a newline
-at your cursor instead of accepting the command. However, pressing `Enter`
-key in normal mode is the same; it will accepts the current command as usual.
-Other keys will behave the same.
 
 ### Compatibility
 
@@ -183,3 +169,18 @@ mitigate the issue, please add the following after you've sourced `zsh-syntax-hi
 zhm-add-update-region-highlight-hook
 ```
 
+# Plugin Specifics
+This section document some features that is different to Helix.
+
+Press `Alt-Enter` in any mode for toggling multi-line mode.
+Press `Ctrl-p`/`Ctrl-n` in any mode for moving in the command history.
+
+The register `%` will returns the output of the `pwd` command. Originally, it is "current file path" in Helix.
+
+By pressing `Alt-Enter`, the editor will be switched to multi-line mode.
+In this mode, a message `-- MULTILINE --` with a newline is prepended to your
+commandline to ensure your first line in the buffer is at the same level
+to any other lines. Pressing `Enter` key in insert mode will add a newline
+at your cursor instead of accepting the command. However, pressing `Enter`
+key in normal mode is the same; it will accepts the current command as usual.
+Other keys will behave the same.
