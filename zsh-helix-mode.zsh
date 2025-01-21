@@ -2512,10 +2512,10 @@ function zhm_zle_line_pre_redraw {
     fi
   
   else
-    __zhm_update_region_highlight
     if [[ -n "$ZHM_PROMPT_HOOK" ]]; then
       eval $ZHM_PROMPT_HOOK
     fi
+    __zhm_update_region_highlight
   fi
 }
 
