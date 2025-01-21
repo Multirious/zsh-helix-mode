@@ -70,6 +70,8 @@ ZHM_PROMPT_HOOK=
 zhm_prompt_region_highlight=()
 ZHM_BUFFER_BEFORE_PROMPT=
 
+ZHM_MESSAGE_CLEAR_DELAY=0
+
 ZHM_LAST_MOTION=""
 ZHM_LAST_MOTION_CHAR=""
 
@@ -484,6 +486,11 @@ $prompt"
   __zhm_update_region_highlight
 }
 
+function __zhm_show_message {
+  zle -M "$1"
+  ZHM_MESSAGE_CLEAR_DELAY=2
+}
+
 # Mode =========================================================================
 
 function zhm_normal {
@@ -610,8 +617,6 @@ function zhm_command_mode {
     return
   fi
 
-  echo "$command" >> /tmp/zhm_log
-
   case "${command[1]}" in
     "o" | "open")
       if (( ${#command} <= 1  )); then
@@ -620,7 +625,7 @@ function zhm_command_mode {
       local content=
       content="$(cat "${command[2]}" 2>&1)"
       if (( $? != 0 )); then
-        zle -M "$content"
+        __zhm_show_message "$content"
         return
       fi
       __zhm_update_changes_history_pre
@@ -633,7 +638,7 @@ function zhm_command_mode {
       __zhm_update_changes_history_post
       ;;
     *)
-      zle -M "Unknown command"
+      __zhm_show_message "Unknown Command"
   esac
 
 }
@@ -1461,6 +1466,12 @@ function zhm_select_regex {
   local REPLY=
   __zhm_prompt "select:" __zhm_select_regex_hook
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  local error=$([[ "" =~ "$REPLY" ]] 2>&1)
+  if [[ -n "$error" ]]; then
+    __zhm_show_message "$error"
+  fi
+  
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
@@ -2516,6 +2527,13 @@ function zhm_zle_line_pre_redraw {
       eval $ZHM_PROMPT_HOOK
     fi
     __zhm_update_region_highlight
+  fi
+
+  if (( ZHM_MESSAGE_CLEAR_DELAY > 0 )); then
+    ZHM_MESSAGE_CLEAR_DELAY=$((ZHM_MESSAGE_CLEAR_DELAY - 1))
+    if (( ZHM_MESSAGE_CLEAR_DELAY == 0 )); then
+      zle -M ""
+    fi
   fi
 }
 
