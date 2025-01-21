@@ -76,7 +76,7 @@ ZHM_LAST_MOTION_CHAR=""
 ZHM_CURRENT_REGISTER="\""
 ZHM_JUST_SELECTED_REGISTER=0
 
-# Private functions ============================================================
+# Utility functions ============================================================
 
 function __zhm_read_register {
   local register=$1
