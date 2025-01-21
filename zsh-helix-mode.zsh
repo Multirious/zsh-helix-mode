@@ -42,6 +42,12 @@ zhm_cursors_pos=(0)
 zhm_cursors_selection_left=(0)
 zhm_cursors_selection_right=(0)
 
+ZHM_RECORD_CHANGES=1
+ZHM_PRIMARY_CURSOR_IDX_PREV=1
+zhm_cursors_pos_prev=(0)
+zhm_cursors_selection_left_prev=(0)
+zhm_cursors_selection_right_prev=(0)
+
 ZHM_CHANGES_HISTORY_IDX=1
 zhm_changes_history_buffer=("")
 zhm_changes_history_cursors_idx_starts_pre=(1)
@@ -197,43 +203,44 @@ function __zhm_update_region_highlight {
   done
 }
 
+function __zhm_trim_history {
+  local keep=$((ZHM_CHANGES_HISTORY_IDX))
+  zhm_changes_history_buffer=("${(@)zhm_changes_history_buffer[1,$keep]}")
+
+  local idx=$((zhm_changes_history_cursors_idx_starts_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
+  zhm_changes_history_cursors_pos_pre=($zhm_changes_history_cursors_pos_pre[1,$idx])
+  zhm_changes_history_cursors_selection_left_pre=($zhm_changes_history_cursors_selection_left_pre[1,$idx])
+  zhm_changes_history_cursors_selection_right_pre=($zhm_changes_history_cursors_selection_right_pre[1,$idx])
+  zhm_changes_history_cursors_idx_starts_pre=($zhm_changes_history_cursors_idx_starts_pre[1,$keep])
+  zhm_changes_history_cursors_count_pre=($zhm_changes_history_cursors_count_pre[1,$keep])
+  zhm_changes_history_primary_cursor_pre=($zhm_changes_history_primary_cursor_post[1,$keep])
+
+  local idx=$((zhm_changes_history_cursors_idx_starts_post[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
+  zhm_changes_history_cursors_pos_post=($zhm_changes_history_cursors_pos_post[1,$idx])
+  zhm_changes_history_cursors_selection_left_post=($zhm_changes_history_cursors_selection_left_post[1,$idx])
+  zhm_changes_history_cursors_selection_right_post=($zhm_changes_history_cursors_selection_right_post[1,$idx])
+  zhm_changes_history_cursors_idx_starts_post=($zhm_changes_history_cursors_idx_starts_post[1,$keep])
+  zhm_changes_history_cursors_count_post=($zhm_changes_history_cursors_count_post[1,$keep])
+  zhm_changes_history_primary_cursor_post=($zhm_changes_history_primary_cursor_post[1,$keep])
+}
+
 function __zhm_update_changes_history_pre {
-  if (( ${#zhm_changes_history_buffer} > ZHM_CHANGES_HISTORY_IDX )); then
-    local keep=$((ZHM_CHANGES_HISTORY_IDX))
-    zhm_changes_history_buffer=("${(@)zhm_changes_history_buffer[1,$keep]}")
-
-    local idx=$((zhm_changes_history_cursors_idx_starts_pre[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
-    zhm_changes_history_cursors_pos_pre=($zhm_changes_history_cursors_pos_pre[1,$idx])
-    zhm_changes_history_cursors_selection_left_pre=($zhm_changes_history_cursors_selection_left_pre[1,$idx])
-    zhm_changes_history_cursors_selection_right_pre=($zhm_changes_history_cursors_selection_right_pre[1,$idx])
-    zhm_changes_history_cursors_idx_starts_pre=($zhm_changes_history_cursors_idx_starts_pre[1,$keep])
-    zhm_changes_history_cursors_count_pre=($zhm_changes_history_cursors_count_pre[1,$keep])
-    zhm_changes_history_primary_cursor_pre=($zhm_changes_history_primary_cursor_post[1,$keep])
-
-    local idx=$((zhm_changes_history_cursors_idx_starts_post[$((ZHM_CHANGES_HISTORY_IDX + 1))] - 1))
-    zhm_changes_history_cursors_pos_post=($zhm_changes_history_cursors_pos_post[1,$idx])
-    zhm_changes_history_cursors_selection_left_post=($zhm_changes_history_cursors_selection_left_post[1,$idx])
-    zhm_changes_history_cursors_selection_right_post=($zhm_changes_history_cursors_selection_right_post[1,$idx])
-    zhm_changes_history_cursors_idx_starts_post=($zhm_changes_history_cursors_idx_starts_post[1,$keep])
-    zhm_changes_history_cursors_count_post=($zhm_changes_history_cursors_count_post[1,$keep])
-    zhm_changes_history_primary_cursor_post=($zhm_changes_history_primary_cursor_post[1,$keep])
-  fi
   zhm_changes_history_cursors_idx_starts_pre+=(
     $(( ${#zhm_changes_history_cursors_pos_pre} + 1 ))
   )
   zhm_changes_history_cursors_count_pre+=(
-    "${#zhm_cursors_pos}"
+    "${#zhm_cursors_pos_prev}"
   )
   zhm_changes_history_cursors_pos_pre+=(
-    "${zhm_cursors_pos[@]}"
+    "${zhm_cursors_pos_prev[@]}"
   )
   zhm_changes_history_cursors_selection_left_pre+=(
-    "${zhm_cursors_selection_left[@]}")
+    "${zhm_cursors_selection_left_prev[@]}")
   zhm_changes_history_cursors_selection_right_pre+=(
-    "${zhm_cursors_selection_right[@]}"
+    "${zhm_cursors_selection_right_prev[@]}"
   )
   zhm_changes_history_primary_cursor_pre+=(
-    $ZHM_PRIMARY_CURSOR_IDX
+    $ZHM_PRIMARY_CURSOR_IDX_PREV
   )
 }
 
@@ -2538,7 +2545,34 @@ function zhm_zle_line_pre_redraw {
     else
       ZHM_JUST_SELECTED_REGISTER=0
     fi
-  
+
+    # Hook based history so if 3rd plugin changed the buffer,
+    # it will still recorded into the changes history
+
+    if [[ $ZHM_MODE == insert ]]; then
+      ZHM_RECORD_CHANGES=0
+    fi
+
+    if (( ZHM_RECORD_CHANGES == 1 )); then
+      echo "do record changes" >> /tmp/zhm_log
+      if (( ZHM_CHANGES_HISTORY_IDX > 1 )) && [[
+          "$BUFFER" != "$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
+        ]]
+      then
+        echo "changed" >> /tmp/zhm_log
+        if (( ${#zhm_changes_history_buffer} > ZHM_CHANGES_HISTORY_IDX )); then
+          __zhm_trim_history
+        fi
+        __zhm_update_changes_history_pre
+        __zhm_update_changes_history_post
+      fi
+
+      ZHM_PRIMARY_CURSOR_IDX_PREV=$ZHM_PRIMARY_CURSOR_IDX
+      zhm_cursors_pos_prev=($zhm_cursors_pos)
+      zhm_cursors_selection_left_prev=($zhm_cursors_selection_left)
+      zhm_cursors_selection_right_prev=($zhm_cursors_selection_right)
+    fi
+    ZHM_RECORD_CHANGES=1
   else
     if [[ -n "$ZHM_PROMPT_HOOK" ]]; then
       eval $ZHM_PROMPT_HOOK
