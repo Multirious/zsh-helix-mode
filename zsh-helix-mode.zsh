@@ -2360,6 +2360,8 @@ function zhm_history_prev {
   zhm_cursors_selection_right=($CURSOR)
   zhm_cursors_last_moved_x=($CURSOR)
 
+  ZHM_RECORD_CHANGES=0
+
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
@@ -2376,6 +2378,8 @@ function zhm_history_next {
   zhm_cursors_selection_left=($CURSOR)
   zhm_cursors_selection_right=($CURSOR)
   zhm_cursors_last_moved_x=($CURSOR)
+
+  ZHM_RECORD_CHANGES=0
 
   __zhm_update_last_moved
   __zhm_update_region_highlight
