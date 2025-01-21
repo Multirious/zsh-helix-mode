@@ -427,7 +427,6 @@ $ZHM_BUFFER_BEFORE_PROMPT
 $prompt"
   fi
 
-
   BUFFER=""
 
   zhm_prompt_region_highlight=()
@@ -455,6 +454,7 @@ $prompt"
   bindkey -A hxprompt main
   
   zle recursive-edit
+  local stat=$?
 
   zhm_prompt_region_highlight=()
 
@@ -484,6 +484,7 @@ $prompt"
   esac
 
   __zhm_update_region_highlight
+  return $stat
 }
 
 function __zhm_show_message {
@@ -611,6 +612,11 @@ function zhm_change {
 function zhm_command_mode {
   local REPLY=
   __zhm_prompt ":"
+  local prompt_stat=$?
+  if (( prompt_stat != 0 )); then
+    return
+  fi
+  
   local command=(${=REPLY})
 
   if (( ${#command} == 0  )); then
@@ -1465,12 +1471,22 @@ function zhm_select_regex {
   zhm_prev_cursors_last_moved_x=($zhm_cursors_last_moved_x)
   local REPLY=
   __zhm_prompt "select:" __zhm_select_regex_hook
-  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  local prompt_stat=$?
 
-  local error=$([[ "" =~ "$REPLY" ]] 2>&1)
-  if [[ -n "$error" ]]; then
-    __zhm_show_message "$error"
+  local regex_error=$( [[ "" =~ "$REPLY" ]] 2>&1 )
+  if [[ -n "$regex_error" ]]; then
+    __zhm_show_message "$regex_error"
   fi
+
+  if [[ -n "$error" ]] || (( prompt_stat != 0 )) ; then
+    ZHM_PRIMARY_CURSOR_IDX=$ZHM_PREV_PRIMARY_CURSOR_IDX
+    zhm_cursors_pos=($zhm_prev_cursors_pos)
+    zhm_cursors_selection_left=($zhm_prev_selection_left)
+    zhm_cursors_selection_right=($zhm_prev_selection_right)
+    zhm_cursors_last_moved_x=($zhm_prev_cursors_last_moved_x)
+  fi
+
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
@@ -2341,17 +2357,20 @@ function zhm_delete_char_backward {
 
 function zhm_prompt_self_insert {
   zle .self-insert
-  __zhm_update_region_highlight
 }
 
 function zhm_prompt_delete_char_backward {
   zle backward-delete-char
-  __zhm_update_region_highlight
 }
 
 function zhm_prompt_accept {
-  zle accept-line
-  __zhm_update_region_highlight
+  zle send-break
+  return 0
+}
+
+function zhm_prompt_exit {
+  zle send-break
+  return 1
 }
 
 # Zsh specifics ================================================================
@@ -2642,6 +2661,7 @@ zle -N zhm_delete_char_backward
 zle -N zhm_prompt_self_insert
 zle -N zhm_prompt_delete_char_backward
 zle -N zhm_prompt_accept
+zle -N zhm_prompt_exit
 
 # Plugin specifics
 zle -N zhm_history_prev
@@ -2784,6 +2804,7 @@ bindkey -M hxprompt -R ' '-'~' zhm_prompt_self_insert
 bindkey -M hxprompt '^?' zhm_prompt_delete_char_backward
 bindkey -M hxprompt '^J' zhm_prompt_accept
 bindkey -M hxprompt '^M' zhm_prompt_accept
+bindkey -M hxprompt '^[' zhm_prompt_exit
 
 # Initializing the editor ======================================================
 
