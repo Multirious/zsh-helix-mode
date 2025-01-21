@@ -1068,6 +1068,48 @@ function zhm_replace_with_yanked {
   __zhm_update_region_highlight
 }
 
+function zhm_switch_case {
+  __zhm_update_changes_history_pre
+
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local content="$BUFFER[$((left + 1)),$((right + 1))]"
+    local replaced=$(printf '%s\n' "$content" | tr '[:lower:][:upper:]' '[:upper:][:lower:]' )
+    BUFFER="${BUFFER:0:$left}$replaced${BUFFER:$((right + 1))}"
+  done
+  
+  __zhm_update_changes_history_post
+}
+
+function zhm_switch_to_lowercase {
+  __zhm_update_changes_history_pre
+
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local content="$BUFFER[$((left + 1)),$((right + 1))]"
+    local replaced=$(printf '%s\n' "$content" | tr '[:upper:]' '[:lower:]' )
+    BUFFER="${BUFFER:0:$left}$replaced${BUFFER:$((right + 1))}"
+  done
+  
+  __zhm_update_changes_history_post
+}
+
+function zhm_switch_to_uppercase {
+  __zhm_update_changes_history_pre
+
+  for i in {1..$#zhm_cursors_pos}; do
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    local content="$BUFFER[$((left + 1)),$((right + 1))]"
+    local replaced=$(printf '%s\n' "$content" | tr '[:lower:]' '[:upper:]' )
+    BUFFER="${BUFFER:0:$left}$replaced${BUFFER:$((right + 1))}"
+  done
+  
+  __zhm_update_changes_history_post
+}
+
 function zhm_replace_selections_with_clipboard {
   __zhm_update_changes_history_pre
   
@@ -2523,6 +2565,9 @@ zle -N zhm_repeat_last_motion
 zle -N zhm_delete
 zle -N zhm_replace
 zle -N zhm_replace_with_yanked
+zle -N zhm_switch_case
+zle -N zhm_switch_to_lowercase
+zle -N zhm_switch_to_uppercase
 zle -N zhm_replace_selections_with_clipboard
 zle -N zhm_undo
 zle -N zhm_redo
@@ -2618,6 +2663,9 @@ for char in {" ".."~"}; do
   bindkey -M hxnor "r$char" zhm_replace
 done
 bindkey -M hxnor "R" zhm_replace_with_yanked
+bindkey -M hxnor "~" zhm_switch_case
+bindkey -M hxnor "\`" zhm_switch_to_lowercase
+bindkey -M hxnor "^[\`" zhm_switch_to_uppercase
 bindkey -M hxnor i zhm_insert
 bindkey -M hxnor a zhm_append
 bindkey -M hxnor I zhm_insert_at_line_start
