@@ -2364,13 +2364,11 @@ function zhm_prompt_delete_char_backward {
 }
 
 function zhm_prompt_accept {
-  zle send-break
-  return 0
+  zle accept-line
 }
 
 function zhm_prompt_exit {
   zle send-break
-  return 1
 }
 
 # Zsh specifics ================================================================
