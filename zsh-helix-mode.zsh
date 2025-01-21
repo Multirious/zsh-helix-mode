@@ -93,16 +93,16 @@ function __zhm_read_register {
     "_")
       ;;
     "#")
-      print "$idx"
+      printf '%s\n' "$idx"
       ;;
     ".")
-      print "$BUFFER[$((zhm_cursors_selection_left[$idx] + 1)),$((zhm_cursors_selection_right[$idx] + 1))]"
+      printf '%s\n' "$BUFFER[$((zhm_cursors_selection_left[$idx] + 1)),$((zhm_cursors_selection_right[$idx] + 1))]"
       ;;
     "%")
-      print "$(pwd)"
+      printf '%s\n' "$(pwd)"
       ;;
     "+")
-      print "$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
+      printf '%s\n' "$(eval $ZHM_CLIPBOARD_READ_CONTENT_FROM)"
       ;;
     *)
       if (( ! ${+zhm_registers_max["$register"]} )); then
@@ -121,7 +121,7 @@ function __zhm_write_register {
     "_"| "#" | "." | "%")
       ;;
     "+")
-      print "$@" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
+      printf '%s\n' "$@" | eval $ZHM_CLIPBOARD_PIPE_CONTENT_TO
       ;;
     *)
       for i in {1..$#}; do
