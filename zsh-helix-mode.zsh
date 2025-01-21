@@ -2520,12 +2520,10 @@ function zhm_zle_line_pre_redraw {
     fi
 
     if (( ZHM_RECORD_CHANGES == 1 )); then
-      echo "do record changes" >> /tmp/zhm_log
-      if (( ZHM_CHANGES_HISTORY_IDX > 1 )) && [[
+      if [[
           "$BUFFER" != "$zhm_changes_history_buffer[$ZHM_CHANGES_HISTORY_IDX]"
         ]]
       then
-        echo "changed" >> /tmp/zhm_log
         if (( ${#zhm_changes_history_buffer} > ZHM_CHANGES_HISTORY_IDX )); then
           __zhm_trim_history
         fi
