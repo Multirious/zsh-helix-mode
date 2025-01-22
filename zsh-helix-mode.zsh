@@ -364,12 +364,8 @@ function __zhm_trailing_goto {
 function __zhm_update_last_moved {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
-      zhm_cursors_last_moved_x[$i]=$((cursor - MBEGIN))
-    else
-      zhm_cursors_last_moved_x[$i]=$cursor
-    fi
+    local line_start=$(__zhm_find_line_start $cursor "$BUFFER")
+    zhm_cursors_last_moved_x[$i]=$((cursor - line_start))
   done
 
 }
@@ -499,6 +495,24 @@ function __zhm_show_message {
   ZHM_MESSAGE_CLEAR_DELAY=2
 }
 
+function __zhm_find_line_end  {
+  setopt localoptions rematchpcre
+  local pos=$1
+  local buffer="$2"
+  if [[ "${buffer:$pos}" =~ '\A[^\n]*\n|\A[^\n]*' ]]; then
+    printf '%s\n' $((pos + MEND - 1))
+  fi
+}
+
+function __zhm_find_line_start {
+  setopt localoptions rematchpcre
+  local pos=$1
+  local buffer="$2"
+  if [[ "${buffer:0:$((pos + 1))}" =~ '[^\n]*\n\z|[^\n]*\z' ]]; then
+    printf '%s\n' $((MBEGIN - 1))
+  fi
+}
+
 # Mode =========================================================================
 
 function zhm_normal {
@@ -547,14 +561,13 @@ function zhm_insert {
 function zhm_insert_at_line_end {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local rbuffer="${BUFFER:$cursor}"
-    if [[ $rbuffer =~ $'^[^\n]+' ]]; then
-      zhm_cursors_pos[$i]=$((cursor + MEND))
-    elif [[ "${BUFFER[$cursor,$((cursor + 1))]}" != $'\n\n' ]]; then
-      zhm_cursors_pos[$i]=$((cursor))
+    local pos=$(__zhm_find_line_end $cursor "$BUFFER")
+    if (( (pos + 1) >= ${#BUFFER} )); then
+      pos=$((pos + 1))
     fi
-    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
-    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+    zhm_cursors_pos[$i]=$pos
+    zhm_cursors_selection_left[$i]=$pos
+    zhm_cursors_selection_right[$i]=$pos
   done
   zhm_insert
 }
@@ -562,12 +575,10 @@ function zhm_insert_at_line_end {
 function zhm_insert_at_line_start {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
-      zhm_cursors_pos[$i]=$((MBEGIN - 1))
-    fi
-    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
-    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+    local pos=$(__zhm_find_line_start $cursor "$BUFFER")
+    zhm_cursors_pos[$i]=$pos
+    zhm_cursors_selection_left[$i]=$pos
+    zhm_cursors_selection_right[$i]=$pos
   done
   zhm_insert
 }
@@ -669,23 +680,20 @@ function zhm_move_right {
 }
 
 function zhm_move_down {
+  setopt localoptions rematchpcre
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local rbuffer="${BUFFER:$cursor}"
-    if [[ $rbuffer =~ $'^[^\n]*?\n' ]]; then
-      __zhm_goto $i $((cursor + MEND))
-      local cursor=$zhm_cursors_pos[$i]
-      local rbuffer="${BUFFER:$cursor}"
-      if [[ $rbuffer =~ $'^[^\n]*?\n|^[^\n]*$' ]]; then
-        local line_last=$((MEND - 1))
-        local last_moved_x=$zhm_cursors_last_moved_x[$i]
-        if (( last_moved_x <= line_last )); then
-          __zhm_goto $i $((cursor + last_moved_x))
-        else
-          __zhm_goto $i $((cursor + line_last))
-        fi
-      fi
+    local line_end=$(__zhm_find_line_end $cursor "$BUFFER")
+    local next_line_start=$((line_end + 1))
+
+    if (( next_line_start >= ${#BUFFER} )); then
+      continue
     fi
+
+    local next_line_end=$(__zhm_find_line_end $next_line_start "$BUFFER")
+    local last_moved_x=$zhm_cursors_last_moved_x[$i]
+    local goto=$((next_line_start + last_moved_x))
+    __zhm_goto $i $((goto <= next_line_end ? goto : next_line_end))
   done
   __zhm_update_region_highlight
 }
@@ -693,24 +701,21 @@ function zhm_move_down {
 function zhm_move_down_or_history_next {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local rbuffer="${BUFFER:$cursor}"
-    if [[ $rbuffer =~ $'^[^\n]*?\n' ]]; then
-      __zhm_goto $i $((cursor + MEND))
-      local cursor=$zhm_cursors_pos[$i]
-      local rbuffer="${BUFFER:$cursor}"
-      if [[ $rbuffer =~ $'^[^\n]*?\n|^[^\n]*$' ]]; then
-        local line_last=$((MEND - 1))
-        local last_moved_x=$zhm_cursors_last_moved_x[$i]
-        if (( last_moved_x <= line_last )); then
-          __zhm_goto $i $((cursor + last_moved_x))
-        else
-          __zhm_goto $i $((cursor + line_last))
-        fi
+    local line_end=$(__zhm_find_line_end $cursor "$BUFFER")
+    local next_line_start=$((line_end + 1))
+
+    if (( next_line_start >= ${#BUFFER} )); then
+      if (( i == ZHM_PRIMARY_CURSOR_IDX )); then
+        zhm_history_next
+        return
       fi
-    elif (( i == ZHM_PRIMARY_CURSOR_IDX )); then
-      zhm_history_prev
-      return
+      continue
     fi
+
+    local next_line_end=$(__zhm_find_line_end $next_line_start "$BUFFER")
+    local last_moved_x=$zhm_cursors_last_moved_x[$i]
+    local goto=$((next_line_start + last_moved_x))
+    __zhm_goto $i $((goto <= next_line_end ? goto : next_line_end))
   done
   __zhm_update_region_highlight
 }
@@ -718,22 +723,17 @@ function zhm_move_down_or_history_next {
 function zhm_move_up {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
-      __zhm_goto $i $((MBEGIN - 1))
-      local cursor=$zhm_cursors_pos[$i]
-      local lbuffer="${BUFFER:0:$cursor}"
-      local new_x=
-      if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
-        new_x=$((cursor - MBEGIN))
-      else
-        new_x=$cursor
-      fi
-      local last_moved_x=$zhm_cursors_last_moved_x[$i]
-      if (( new_x > last_moved_x )); then
-        __zhm_goto $i $((cursor - (new_x - last_moved_x)))
-      fi
+    local line_start=$(__zhm_find_line_start $cursor "$BUFFER")
+    local prev_line_end=$((line_start - 1))
+
+    if (( prev_line_end < 0 )); then
+      continue
     fi
+
+    local prev_line_start=$(__zhm_find_line_end $prev_line_end "$BUFFER")
+    local last_moved_x=$zhm_cursors_last_moved_x[$i]
+    local goto=$((prev_line_start + last_moved_x))
+    __zhm_goto $i $((goto <= prev_line_end ? goto : prev_line_end))
   done
   __zhm_update_region_highlight
 }
@@ -741,25 +741,21 @@ function zhm_move_up {
 function zhm_move_up_or_history_prev {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
-      __zhm_goto $i $((MBEGIN - 1))
-      local cursor=$zhm_cursors_pos[$i]
-      local lbuffer="${BUFFER:0:$cursor}"
-      local new_x=
-      if [[ $lbuffer =~ $'\n[^\n]*$' ]]; then
-        new_x=$((cursor - MBEGIN))
-      else
-        new_x=$cursor
+    local line_start=$(__zhm_find_line_start $cursor "$BUFFER")
+    local prev_line_end=$((line_start - 1))
+
+    if (( prev_line_end < 0 )); then
+      if (( i == ZHM_PRIMARY_CURSOR_IDX )); then
+        zhm_history_prev
+        return
       fi
-      local last_moved_x=$zhm_cursors_last_moved_x[$i]
-      if (( new_x > last_moved_x )); then
-        __zhm_goto $i $((cursor - (new_x - last_moved_x)))
-      fi
-    elif (( i == ZHM_PRIMARY_CURSOR_IDX )); then
-      zhm_history_prev
-      return
+      continue
     fi
+
+    local prev_line_start=$(__zhm_find_line_start $prev_line_end "$BUFFER")
+    local last_moved_x=$zhm_cursors_last_moved_x[$i]
+    local goto=$((prev_line_start + last_moved_x))
+    __zhm_goto $i $((goto <= prev_line_end ? goto : prev_line_end))
   done
   __zhm_update_region_highlight
 }
@@ -1649,36 +1645,26 @@ function zhm_select_all {
 function zhm_extend_line_below {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local right=$zhm_cursors_selection_right[$i]
     local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
 
-    if [[ "$BUFFER[$((left + 1))]" == $'\n' ]]; then
-      if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
-        left=$((MBEGIN - 1))
-        zhm_cursors_selection_left[$i]=$left
-      fi
-    else
-      if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
-        left=$((MBEGIN - 1))
-      fi
-
-      local regex=
-      if [[ "${BUFFER[$((right + 1))]}" == $'\n' ]]; then
-        regex=$'^\n[^\n]*\n|^\n[^\n]*$'
-      else
-        regex=$'^[^\n]*\n|^[^\n]*$'
-      fi
-      if [[ "${BUFFER:$right}" =~ $regex ]]; then
-        right=$((right + MEND - 1))
-      fi
-      zhm_cursors_selection_right[$i]=$right
-      zhm_cursors_selection_left[$i]=$left
-      zhm_cursors_pos[$i]=$right
+    local top_line_start=$(__zhm_find_line_start $left "$BUFFER")
+    local bottom_line_end=$(__zhm_find_line_end $right "$BUFFER")
+    if (( left != top_line_start || right != bottom_line_end )); then
+      zhm_cursors_selection_left[$i]=$top_line_start
+      zhm_cursors_selection_right[$i]=$bottom_line_end
+      zhm_cursors_pos[$i]=$bottom_line_end
+      continue
     fi
-  done
-  CURSOR=$ZHM_SELECTION_RIGHT
 
+    local next_line_start=$((bottom_line_end + 1))
+    local next_line_end=$(__zhm_find_line_end $next_line_start "$BUFFER")
+
+    zhm_cursors_selection_right[$i]=$next_line_end
+    zhm_cursors_pos[$i]=$next_line_end
+  done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
@@ -1689,12 +1675,12 @@ function zhm_extend_to_line_bounds {
     local right=$zhm_cursors_selection_right[$i]
     local left=$zhm_cursors_selection_left[$i]
 
-    if [[ "${BUFFER:0:$left}" =~ $'[^\n]*$' ]]; then
-      zhm_cursors_selection_left[$i]=$((MBEGIN - 1))
-    fi
-    if [[ "${BUFFER:$right}" =~ $'^[^\n]*\n|^[^\n]*$' ]]; then
-      zhm_cursors_selection_right[$i]=$((right + MEND - 1))
-    fi
+    local top_line_start=$(__zhm_find_line_start $left "$BUFFER")
+    local bottom_line_end=$(__zhm_find_line_end $right "$BUFFER")
+
+    zhm_cursors_selection_left[$i]=$top_line_start
+    zhm_cursors_selection_right[$i]=$bottom_line_end
+    
     if (( cursor == right )); then
       zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
     else
@@ -1717,11 +1703,10 @@ function zhm_goto_first_line {
 }
 
 function zhm_goto_last_line {
-  if [[ $BUFFER =~ $'[^\n]*$' ]]; then
-    for i in {1..$#zhm_cursors_pos}; do
-      __zhm_goto $i $((MBEGIN - 1))
-    done
-  fi
+  local last_line_start=$(__zhm_find_line_start ${#BUFFER} "$BUFFER")
+  for i in {1..$#zhm_cursors_pos}; do
+    __zhm_goto $i $last_line_start
+  done
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
@@ -1729,10 +1714,7 @@ function zhm_goto_last_line {
 function zhm_goto_line_start {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
-      __zhm_goto $i $((MBEGIN - 1))
-    fi
+    __zhm_goto $i $(__zhm_find_line_start $cursor "$BUFFER")
   done
   __zhm_update_last_moved
   __zhm_update_region_highlight
@@ -1741,27 +1723,19 @@ function zhm_goto_line_start {
 function zhm_goto_line_end {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local rbuffer="${BUFFER:$cursor}"
-    if [[ $rbuffer =~ $'^[^\n]+' ]]; then
-      __zhm_goto $i $((cursor + MEND - 1))
-    elif [[ "${BUFFER[$cursor,$((cursor + 1))]}" != $'\n\n' ]]; then
-      __zhm_goto $i $((cursor - 1))
-    fi
+    __zhm_goto $i $(__zhm_find_line_end $cursor "$BUFFER")
   done
   __zhm_update_last_moved
   __zhm_update_region_highlight
 }
 
 function zhm_goto_line_first_nonwhitespace {
+  setopt localoptions rematchpcre
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local lbuffer="${BUFFER:0:$cursor}"
-    if [[ $lbuffer =~ $'[^\n]*$' ]]; then
-      local line_start=$((MBEGIN - 1))
-      local line="${BUFFER:$line_start}"
-      if [[ $line =~ '^ *' ]]; then
-        __zhm_goto $i $((line_start + MEND))
-      fi
+    local line_start=$(__zhm_find_line_start $cursor "$BUFFER")
+    if [[ "${BUFFER:$line_start}" =~ '\A[^\S\n]*' ]]; then
+      __zhm_goto $i $((line_start + MEND))
     fi
   done
   __zhm_update_last_moved
