@@ -1412,14 +1412,22 @@ function __zhm_select_regex_hook {
 
     local string_begin=$((left + 1))
     local string_end=$((right + 1))
+
     while true; do
       local substring="${ZHM_BUFFER_BEFORE_PROMPT[$string_begin,$string_end]}"
-      if [[ $substring =~ "$regex" ]] 2>/dev/null; then
-        matches_left+=( $((string_begin + $MBEGIN - 2)) )
-        matches_right+=( $((string_begin + $MEND - 2)) )
-        string_begin=$((string_begin + ${#MATCH}))
-      else
+      if ! [[ $substring =~ "$regex" ]] 2>/dev/null; then
         break
+      fi
+
+      matches_left+=( $((string_begin + $MBEGIN - 2)) )
+      matches_right+=( $((string_begin + $MEND - 2)) )
+
+      string_begin=$((string_begin + $MEND))
+      if (( ${#MATCH} == 0 )); then
+        string_begin=$((string_begin + 1))
+        if (( (string_begin - 1) > string_end )); then
+          break
+        fi
       fi
     done
   done
