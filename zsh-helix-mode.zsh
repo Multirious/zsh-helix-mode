@@ -583,6 +583,50 @@ function zhm_insert_at_line_start {
   zhm_insert
 }
 
+function zhm_open_below {
+  local amount_inserted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local line_end=$(__zhm_find_line_end $((cursor + amount_inserted)) "$BUFFER")
+
+    local at_buffer_end=$(( ${#BUFFER} == (line_end + 1) ))
+
+    BUFFER="${BUFFER:0:$((line_end + 1))}"$'\n'"${BUFFER:$((line_end + 1))}"
+
+    if (( at_buffer_end == 1 )); then
+      zhm_cursors_pos[$i]=$((line_end + 2))
+    else
+      zhm_cursors_pos[$i]=$((line_end + 1))
+    fi
+    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
+    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+    amount_inserted=$((amount_inserted + 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_last_moved
+  __zhm_mode_insert
+  __zhm_update_region_highlight
+}
+
+function zhm_open_above {
+  local amount_inserted=0
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local line_start=$(__zhm_find_line_start $((cursor + amount_inserted)) "$BUFFER")
+
+    BUFFER="${BUFFER:0:$line_start}"$'\n'"${BUFFER:$line_start}"
+
+    zhm_cursors_pos[$i]=$line_start
+    zhm_cursors_selection_left[$i]=$zhm_cursors_pos[$i]
+    zhm_cursors_selection_right[$i]=$zhm_cursors_pos[$i]
+    amount_inserted=$((amount_inserted + 1))
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+  __zhm_update_last_moved
+  __zhm_mode_insert
+  __zhm_update_region_highlight
+}
+
 function zhm_append {
   for i in {1..$#zhm_cursors_pos}; do
     zhm_cursors_pos[$i]=$((zhm_cursors_selection_right[i] + 1))
@@ -2587,6 +2631,8 @@ zle -N zhm_replace_with_yanked
 zle -N zhm_switch_case
 zle -N zhm_switch_to_lowercase
 zle -N zhm_switch_to_uppercase
+zle -N zhm_open_below
+zle -N zhm_open_above
 zle -N zhm_replace_selections_with_clipboard
 zle -N zhm_undo
 zle -N zhm_redo
@@ -2690,6 +2736,8 @@ bindkey -M hxnor i zhm_insert
 bindkey -M hxnor a zhm_append
 bindkey -M hxnor I zhm_insert_at_line_start
 bindkey -M hxnor A zhm_insert_at_line_end
+bindkey -M hxnor o zhm_open_below
+bindkey -M hxnor O zhm_open_above
 bindkey -M hxnor u zhm_undo
 bindkey -M hxnor U zhm_redo
 bindkey -M hxnor y zhm_yank
