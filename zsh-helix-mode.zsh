@@ -1711,13 +1711,14 @@ function zhm_extend_line_below {
 
   __zhm_update_last_moved
   __zhm_update_region_highlight
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 function zhm_extend_to_line_bounds {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    local right=$zhm_cursors_selection_right[$i]
     local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
 
     local top_line_start=$(__zhm_find_line_start $left "$BUFFER")
     local bottom_line_end=$(__zhm_find_line_end $right "$BUFFER")
@@ -1734,6 +1735,7 @@ function zhm_extend_to_line_bounds {
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_update_last_moved
   __zhm_update_region_highlight
+  ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
 # Goto =========================================================================
