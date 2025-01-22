@@ -1769,7 +1769,17 @@ function zhm_goto_line_start {
 function zhm_goto_line_end {
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
-    __zhm_goto $i $(__zhm_find_line_end $cursor "$BUFFER")
+    local line_end=$(__zhm_find_line_end $cursor "$BUFFER")
+    local goto=
+    if [[
+      "$BUFFER[$((line_end + 1))]" == $'\n'
+      && "$BUFFER[$line_end]" != $'\n'
+    ]]; then
+      goto=$((line_end - 1))
+    else
+      goto=$line_end
+    fi
+    __zhm_goto $i $goto
   done
   __zhm_update_last_moved
   __zhm_update_region_highlight
