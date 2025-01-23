@@ -2599,6 +2599,12 @@ add-zle-hook-widget zle-line-pre-redraw zhm_zle_line_pre_redraw
 
 function zhm-add-update-region-highlight-hook {
   function zhm-update-region-highlight {
+    if (( ZHM_ACCEPTING == 1)); then
+      region_highlight=(
+        ${region_highlight:#*memo=zsh-helix-mode}
+      )
+      return
+    fi
     __zhm_update_region_highlight
   }
   add-zle-hook-widget zle-line-pre-redraw zhm-update-region-highlight
