@@ -3,33 +3,33 @@
 # The plugin print these variables after mode changes
 
 # Reset then pastel blue block cursor
-export ZHM_CURSOR_NORMAL="${ZHM_CURSOR_NORMAL:-\e[0m\e[2 q\e]12;#B4BEFE\a}"
+: "${ZHM_CURSOR_NORMAL:=\e[0m\e[2 q\e]12;#B4BEFE\a}"
 
 # Reset then pastel red block cursor
-export ZHM_CURSOR_SELECT="${ZHM_CURSOR_SELECT:-\e[0m\e[2 q\e]12;#F2CDCD\a}"
+: "${ZHM_CURSOR_SELECT:=\e[0m\e[2 q\e]12;#F2CDCD\a}"
 
 # Reset then white vertical blinking cursor
-export ZHM_CURSOR_INSERT="${ZHM_CURSOR_INSERT:-\e[0m\e[5 q\e]12;white\a}"
+: "${ZHM_CURSOR_INSERT:=\e[0m\e[5 q\e]12;white\a}"
 
 # Uses the syntax from https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
-export ZHM_STYLE_CURSOR_NORMAL="fg=black,bg=#b4befe"
-export ZHM_STYLE_CURSOR_SELECT="fg=black,bg=#f2cdcd"
-export ZHM_STYLE_CURSOR_INSERT="fg=black,bg=#a6e3a1"
-export ZHM_STYLE_OTHER_CURSOR_NORMAL="fg=black,bg=#878ec0"
-export ZHM_STYLE_OTHER_CURSOR_SELECT="fg=black,bg=#b5a6a8"
-export ZHM_STYLE_OTHER_CURSOR_INSERT='fg=black,bg=#7ea87f'
-export ZHM_STYLE_SELECTION="fg=white,bg=#45475a"
+: "${ZHM_STYLE_CURSOR_NORMAL:=fg=black,bg=#b4befe}"
+: "${ZHM_STYLE_CURSOR_SELECT:=fg=black,bg=#f2cdcd}"
+: "${ZHM_STYLE_CURSOR_INSERT:=fg=black,bg=#a6e3a1}"
+: "${ZHM_STYLE_OTHER_CURSOR_NORMAL:=fg=black,bg=#878ec0}"
+: "${ZHM_STYLE_OTHER_CURSOR_SELECT:=fg=black,bg=#b5a6a8}"
+: "${ZHM_STYLE_OTHER_CURSOR_INSERT:=fg=black,bg=#7ea87f}"
+: "${ZHM_STYLE_SELECTION:=fg=white,bg=#45475a}"
 
 # Clipboard commands
 if [[ -n $DISPLAY ]]; then
-  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-xclip -sel clip}"
-  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-xclip -o -sel clip}"
+  : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=xclip -sel clip}"
+  : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=xclip -o -sel clip}"
 elif [[ -n $WAYLAND_DISPLAY ]]; then
-  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-wl-copy}"
-  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-wl-paste --no-newline}"
+  : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=wl-copy}"
+  : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=wl-paste --no-newline}"
 else
-  export ZHM_CLIPBOARD_PIPE_CONTENT_TO="${ZHM_CLIPBOARD_PIPE_CONTENT_TO:-}"
-  export ZHM_CLIPBOARD_READ_CONTENT_FROM="${ZHM_CLIPBOARD_READ_CONTENT_FROM:-}"
+  : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=}"
+  : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=}"
 fi
 
 # Global variables =============================================================
