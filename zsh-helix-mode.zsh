@@ -1517,6 +1517,34 @@ function zhm_select_regex {
   ZHM_HOOK_IKNOWWHATIMDOING=1
 }
 
+function zhm_trim_selections {
+  setopt localoptions rematchpcre
+  for i in {1..$#zhm_cursors_pos}; do
+    local cursor=$zhm_cursors_pos[$i]
+    local left=$zhm_cursors_selection_left[$i]
+    local right=$zhm_cursors_selection_right[$i]
+    if (( left == right )); then
+      continue
+    fi
+    if [[ "${BUFFER[$((left + 1)),$((right + 1))]}" =~ '\A\s*([\S\s]+?)\s*\z' ]]; then
+      zhm_cursors_selection_left[$i]=$((left + mbegin[1] - 1))
+      zhm_cursors_selection_right[$i]=$((left + mend[1] - 1))
+    else
+      zhm_cursors_selection_left[$i]=$cursor
+      zhm_cursors_selection_right[$i]=$cursor
+    fi
+    if (( cursor == right )); then
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_right[$i]
+    else
+      zhm_cursors_pos[$i]=$zhm_cursors_selection_left[$i]
+    fi
+  done
+  CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
+
+  ZHM_HOOK_IKNOWWHATIMDOING=1
+  __zhm_update_region_highlight
+}
+
 function zhm_collapse_selection {
   zhm_cursors_selection_left=("$zhm_cursors_pos[@]")
   zhm_cursors_selection_right=("$zhm_cursors_pos[@]")
@@ -2669,6 +2697,7 @@ zle -N zhm_shell_pipe
 
 # Selection Manipulation
 zle -N zhm_select_regex
+zle -N zhm_trim_selections
 zle -N zhm_collapse_selection
 zle -N zhm_flip_selections
 zle -N zhm_ensure_selections_forward
@@ -2774,6 +2803,7 @@ bindkey -M hxnor "|" zhm_shell_pipe
 
 # Normal: Selection manipulation -----------------------------------------------
 bindkey -M hxnor s zhm_select_regex
+bindkey -M hxnor "_" zhm_trim_selections
 bindkey -M hxnor \; zhm_collapse_selection
 bindkey -M hxnor "^[;" zhm_flip_selections
 bindkey -M hxnor "^[:" zhm_ensure_selections_forward
