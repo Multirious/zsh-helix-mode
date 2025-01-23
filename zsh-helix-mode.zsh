@@ -1,5 +1,7 @@
 # Configurations ===============================================================
 
+# Current default theme is catppuccin_mocha :)
+
 # The plugin print these variables after mode changes
 
 # Reset then pastel blue block cursor
