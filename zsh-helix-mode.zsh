@@ -2750,8 +2750,8 @@ zle -N zhm_accept_or_insert_newline
 
 # Keybindings ==================================================================
 
-bindkey -N hxnor
-bindkey -N hxins
+bindkey -N hxnor vicmd
+bindkey -N hxins viins
 bindkey -N hxprompt
 
 # Normal: Movement -------------------------------------------------------------
