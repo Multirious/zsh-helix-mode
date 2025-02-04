@@ -2859,9 +2859,9 @@ bindkey -M hxnor ' R' zhm_replace_selections_with_clipboard
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins '^[' zhm_normal
 
-for char in {' '..'~'}; do
-  bindkey -M hxins '^R'"$char" zhm_insert_register
-done
+# for char in {' '..'~'}; do
+#   bindkey -M hxins '^R'"$char" zhm_insert_register
+# done
 bindkey -M hxins -R ' '-'~' zhm_self_insert
 bindkey -M hxins '^?' zhm_delete_char_backward
 
