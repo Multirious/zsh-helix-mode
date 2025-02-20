@@ -23,12 +23,12 @@
 : "${ZHM_STYLE_SELECTION:=fg=white,bg=#45475a}"
 
 # Clipboard commands
-if [[ -n $DISPLAY ]]; then
-  : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=xclip -sel clip}"
-  : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=xclip -o -sel clip}"
-elif [[ -n $WAYLAND_DISPLAY ]]; then
+if [[ -n $WAYLAND_DISPLAY ]]; then
   : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=wl-copy}"
   : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=wl-paste --no-newline}"
+elif [[ -n $DISPLAY ]]; then
+  : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=xclip -sel clip}"
+  : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=xclip -o -sel clip}"
 else
   : "${ZHM_CLIPBOARD_PIPE_CONTENT_TO:=}"
   : "${ZHM_CLIPBOARD_READ_CONTENT_FROM:=}"
