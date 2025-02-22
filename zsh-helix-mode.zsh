@@ -2420,7 +2420,7 @@ function zhm_history_prev {
     __zhm_mode_normal
   fi
 
-  HISTNO=$((HISTNO - 1))
+  zle up-history
 
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
@@ -2439,7 +2439,7 @@ function zhm_history_next {
     __zhm_mode_normal
   fi
 
-  HISTNO=$((HISTNO + 1))
+  zle down-history
 
   CURSOR=${#BUFFER}
   zhm_cursors_pos=($CURSOR)
