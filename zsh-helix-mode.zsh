@@ -2768,6 +2768,15 @@ for char in {" ".."~"}; do
 done
 bindkey -M hxnor "^[." zhm_repeat_last_motion
 
+bindkey -M hxnor "^[OA" zhm_move_up_or_history_prev
+bindkey -M hxnor "^[OB" zhm_move_down_or_history_prev
+bindkey -M hxnor "^[OC" zhm_move_right
+bindkey -M hxnor "^[OD" zhm_move_left
+bindkey -M hxnor "^[[A" zhm_move_up_or_history_prev
+bindkey -M hxnor "^[[B" zhm_move_down_or_history_prev
+bindkey -M hxnor "^[[C" zhm_move_right
+bindkey -M hxnor "^[[D" zhm_move_left
+
 # Normal: Changes --------------------------------------------------------------
 for char in {" ".."~"}; do
   bindkey -M hxnor "r$char" zhm_replace
