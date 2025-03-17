@@ -927,7 +927,7 @@ function zhm_move_next_long_word_end {
 }
 
 function zhm_find_till_char {
-  local char="${KEYS:1}"
+  local char="$(read -ek 1)"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
@@ -943,7 +943,7 @@ function zhm_find_till_char {
 }
 
 function zhm_find_next_char {
-  local char="${KEYS:1}"
+  local char="$(read -ek 1)"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
@@ -959,7 +959,7 @@ function zhm_find_next_char {
 }
 
 function zhm_till_prev_char {
-  local char="${KEYS:1}"
+  local char="$(read -ek 1)"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
@@ -975,7 +975,7 @@ function zhm_till_prev_char {
 }
 
 function zhm_find_prev_char {
-  local char="${KEYS:1}"
+  local char="$(read -ek 1)"
   char="$(printf '%s' "$char" | sed 's/[.[\(*^$+?{|]/\\&/g')"
   for i in {1..$#zhm_cursors_pos}; do
     local cursor=$zhm_cursors_pos[$i]
@@ -1070,7 +1070,7 @@ function zhm_delete {
 }
 
 function zhm_replace {
-  local char="${KEYS:1}"
+  local char="$(read -ek 1)"
   for i in {1..$#zhm_cursors_pos}; do
     local left=$zhm_cursors_selection_left[$i]
     local right=$zhm_cursors_selection_right[$i]
@@ -1390,7 +1390,7 @@ function zhm_clipboard_paste_before {
 }
 
 function zhm_select_register {
-  local register="${KEYS:1}"
+  local register="$(read -ek 1)"
   if [[ -z "$register" ]]; then
     return
   fi
@@ -1940,7 +1940,7 @@ function zhm_match_brackets {
 }
 
 function zhm_surround_add {
-  local char="${KEYS:2}"
+  local char="$(read -ek 1)"
   local left_char
   local right_char
   case $char in
@@ -2332,7 +2332,7 @@ ${BUFFER:$cursor}"
 }
 
 function zhm_insert_register {
-  local register="${KEYS:1}"
+  local register="$(read -ek 1)"
 
   local amount_pasted=0
   for i in {1..$#zhm_cursors_pos}; do
@@ -2760,12 +2760,10 @@ bindkey -M hxnor e zhm_move_next_word_end
 bindkey -M hxnor W zhm_move_next_long_word_start
 bindkey -M hxnor B zhm_move_prev_long_word_start
 bindkey -M hxnor E zhm_move_next_long_word_end
-for char in {" ".."~"}; do
-  bindkey -M hxnor "t$char" zhm_find_till_char
-  bindkey -M hxnor "f$char" zhm_find_next_char
-  bindkey -M hxnor "T$char" zhm_till_prev_char
-  bindkey -M hxnor "F$char" zhm_find_prev_char
-done
+bindkey -M hxnor t zhm_find_till_char
+bindkey -M hxnor f zhm_find_next_char
+bindkey -M hxnor T zhm_till_prev_char
+bindkey -M hxnor F zhm_find_prev_char
 bindkey -M hxnor "^[." zhm_repeat_last_motion
 
 bindkey -M hxnor "^[OA" zhm_move_up_or_history_prev
@@ -2778,10 +2776,8 @@ bindkey -M hxnor "^[[C" zhm_move_right
 bindkey -M hxnor "^[[D" zhm_move_left
 
 # Normal: Changes --------------------------------------------------------------
-for char in {" ".."~"}; do
-  bindkey -M hxnor "r$char" zhm_replace
-done
-bindkey -M hxnor "R" zhm_replace_with_yanked
+bindkey -M hxnor r zhm_replace
+bindkey -M hxnor R zhm_replace_with_yanked
 bindkey -M hxnor "~" zhm_switch_case
 bindkey -M hxnor "\`" zhm_switch_to_lowercase
 bindkey -M hxnor "^[\`" zhm_switch_to_uppercase
@@ -2798,9 +2794,7 @@ bindkey -M hxnor p zhm_paste_after
 bindkey -M hxnor P zhm_paste_before
 bindkey -M hxnor d zhm_delete
 bindkey -M hxnor c zhm_change
-for char in {" ".."~"}; do
-  bindkey -M hxnor "\"$char" zhm_select_register
-done
+bindkey -M hxnor "\"" zhm_select_register
 
 # Normal: Shell ----------------------------------------------------------------
 bindkey -M hxnor "|" zhm_shell_pipe
@@ -2840,9 +2834,7 @@ bindkey -M hxnor gs zhm_goto_line_first_nonwhitespace
 
 # Normal/Match -----------------------------------------------------------------
 bindkey -M hxnor mm zhm_match_brackets
-for char in {" ".."~"}; do
-  bindkey -M hxnor "ms$char" zhm_surround_add
-done
+bindkey -M hxnor ms zhm_surround_add
 local pairs=("(" ")" "[" "]" "<" ">" "{" "}" "\"" "'" "\`")
 for char in $pairs; do
   bindkey -M hxnor "mi$char" zhm_select_surround_pair_inner
@@ -2863,9 +2855,7 @@ bindkey -M hxnor ' R' zhm_replace_selections_with_clipboard
 # bindkey -M hxins "jk" zhm_normal
 bindkey -M hxins '^[' zhm_normal
 
-# for char in {' '..'~'}; do
-#   bindkey -M hxins '^R'"$char" zhm_insert_register
-# done
+# bindkey -M hxins '^R'"$char" zhm_insert_register
 bindkey -M hxins -R ' '-'~' zhm_self_insert
 bindkey -M hxins '^?' zhm_delete_char_backward
 
