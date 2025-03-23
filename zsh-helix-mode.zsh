@@ -67,8 +67,8 @@ zhm_changes_history_primary_cursor_post=(1)
 
 zhm_cursors_last_moved_x=(0)
 
-declare -A zhm_registers
-declare -A zhm_registers_max
+declare -gA zhm_registers
+declare -gA zhm_registers_max
 
 ZHM_ACCEPTING=0
 ZHM_HOOK_IKNOWWHATIMDOING=0
