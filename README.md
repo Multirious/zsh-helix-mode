@@ -15,6 +15,8 @@ Any existing keybindings that *should* reflect the official default Helix keybin
 - Multi-line mode. It's Helix editor right in your prompt!
 - Cursor styling. Display different modes with different cursor looks.
 
+Post an issue if you need any missing feature! May it be a keybind widget or command (for command mode) or anything else.
+
 ---
 
 #### Sections
