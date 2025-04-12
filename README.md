@@ -170,8 +170,8 @@ mitigate the issue, please add the following after you've sourced `zsh-syntax-hi
 zhm-add-update-region-highlight-hook
 ```
 
-### [fzf-tab](https://github.com/Aloxaf/fzf-tab)
-Please add the following after you've source zsh-helix-mode and fzf-tab (in any order):
+#### [fzf-tab](https://github.com/Aloxaf/fzf-tab)
+Please add the following after you've sourced zsh-helix-mode and fzf-tab (in any order):
 ```zsh
 bindkey '^I' fzf-tab-complete
 ```
