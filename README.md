@@ -170,6 +170,11 @@ mitigate the issue, please add the following after you've sourced `zsh-syntax-hi
 zhm-add-update-region-highlight-hook
 ```
 
+### [fzf-tab](https://github.com/Aloxaf/fzf-tab)
+Please add the following after you've source zsh-helix-mode and fzf-tab (in any order):
+```zsh
+```
+
 # Plugin Specifics
 This section document some features that is different to Helix.
 
