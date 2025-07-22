@@ -2767,11 +2767,11 @@ bindkey -M hxnor F zhm_find_prev_char
 bindkey -M hxnor "^[." zhm_repeat_last_motion
 
 bindkey -M hxnor "^[OA" zhm_move_up_or_history_prev
-bindkey -M hxnor "^[OB" zhm_move_down_or_history_prev
+bindkey -M hxnor "^[OB" zhm_move_down_or_history_next
 bindkey -M hxnor "^[OC" zhm_move_right
 bindkey -M hxnor "^[OD" zhm_move_left
 bindkey -M hxnor "^[[A" zhm_move_up_or_history_prev
-bindkey -M hxnor "^[[B" zhm_move_down_or_history_prev
+bindkey -M hxnor "^[[B" zhm_move_down_or_history_next
 bindkey -M hxnor "^[[C" zhm_move_right
 bindkey -M hxnor "^[[D" zhm_move_left
 
