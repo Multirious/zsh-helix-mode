@@ -287,6 +287,28 @@ function __zhm_mode_insert {
   printf "$ZHM_CURSOR_INSERT"
 }
 
+function __zhm_clear_selection_goto {
+  local idx=$1
+  local cursor=$2
+  local left=$zhm_cursors_selection_left[$idx]
+  local right=$zhm_cursors_selection_right[$idx]
+  
+  if (( cursor < 0 )); then
+    cursor=0
+  fi
+  if (( cursor > ${#BUFFER} )); then
+    cursor=${#BUFFER}
+  fi
+
+  if (( idx == ZHM_PRIMARY_CURSOR_IDX )); then
+    CURSOR=$cursor
+  fi
+
+  zhm_cursors_pos[$idx]=$cursor
+  zhm_cursors_selection_left[$idx]=$cursor
+  zhm_cursors_selection_right[$idx]=$cursor
+}
+
 function __zhm_goto {
   local idx=$1
   local cursor=$2
@@ -716,10 +738,25 @@ function zhm_move_left {
   __zhm_update_region_highlight
 }
 
+function zhm_clear_selection_move_left {
+  for i in {1..$#zhm_cursors_pos}; do
+    __zhm_clear_selection_goto $i $((zhm_cursors_pos[i] - 1))
+  done
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
 
 function zhm_move_right {
   for i in {1..$#zhm_cursors_pos}; do
     __zhm_goto $i $((zhm_cursors_pos[i] + 1))
+  done
+  __zhm_update_last_moved
+  __zhm_update_region_highlight
+}
+
+function zhm_clear_selection_move_right {
+  for i in {1..$#zhm_cursors_pos}; do
+    __zhm_clear_selection_goto $i $((zhm_cursors_pos[i] + 1))
   done
   __zhm_update_last_moved
   __zhm_update_region_highlight
@@ -2651,6 +2688,8 @@ zle -N zhm_command_mode
 # Movement
 zle -N zhm_move_left
 zle -N zhm_move_right
+zle -N zhm_clear_selection_move_left
+zle -N zhm_clear_selection_move_right
 zle -N zhm_move_down
 zle -N zhm_move_down_or_history_next
 zle -N zhm_move_up
@@ -2863,6 +2902,16 @@ bindkey -M hxins '^N' zhm_history_next
 bindkey -M hxins '^P' zhm_history_prev
 bindkey -M hxins '^I' zhm_expand_or_complete
 
+# Insert: Movement -------------------------------------------------------------
+bindkey -M hxins "^[OA" zhm_move_up_or_history_prev
+bindkey -M hxins "^[OB" zhm_move_down_or_history_next
+bindkey -M hxins "^[OC" zhm_clear_selection_move_right
+bindkey -M hxins "^[OD" zhm_clear_selection_move_left
+bindkey -M hxins "^[[A" zhm_move_up_or_history_prev
+bindkey -M hxins "^[[B" zhm_move_down_or_history_next
+bindkey -M hxins "^[[C" zhm_clear_selection_move_right
+bindkey -M hxins "^[[D" zhm_clear_selection_move_left
+
 # Insert: Plugin specifics -----------------------------------------------------
 bindkey -M hxnor '^N' zhm_history_next
 bindkey -M hxnor '^P' zhm_history_prev
@@ -2883,4 +2932,4 @@ bindkey -M hxprompt '^[' zhm_prompt_exit
 # Initializing the editor ======================================================
 
 bindkey -A hxins main
-printf "$ZHM_CURSOR_INSERT"
+# printf "$ZHM_CURSOR_INSERT"
