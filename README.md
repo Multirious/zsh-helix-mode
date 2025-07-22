@@ -114,6 +114,16 @@ that basically means "reset, block cursor, pastel red".
 - By default, it is `\e[0m\e[5 q\e]12;white\a` which is a string of ANSI escape sequences<br/>
 that basically means "reset, vertical blinking cursor, white".
 
+These variables use the syntax from https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Character-Highlighting
+
+`ZHM_STYLE_CURSOR_NORMAL`, default is `fg=black,bg=#b4befe`
+`ZHM_STYLE_CURSOR_SELECT`, default is `fg=black,bg=#f2cdcd`
+`ZHM_STYLE_CURSOR_INSERT`, default is `fg=black,bg=#a6e3a1`
+`ZHM_STYLE_OTHER_CURSOR_NORMAL`, default is `fg=black,bg=#878ec0`
+`ZHM_STYLE_OTHER_CURSOR_SELECT`, default is `fg=black,bg=#b5a6a8`
+`ZHM_STYLE_OTHER_CURSOR_INSERT`, default is `fg=black,bg=#7ea87f`
+`ZHM_STYLE_SELECTION`, default is `fg=white,bg=#45475a`
+
 ### Clipboard
 
 `ZHM_CLIPBOARD_PIPE_CONTENT_TO`
