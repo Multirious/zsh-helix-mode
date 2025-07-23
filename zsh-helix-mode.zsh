@@ -2490,17 +2490,52 @@ function zhm_history_next {
   __zhm_update_region_highlight
 }
 
-function zhm_expand_or_complete {
-  local cursor_before_expand=$CURSOR
-  zle expand-or-complete
+# Wrap existing widget with extra ZHM compatibility code
+function zhm_wrap_widget {
+  local prev_name="$1"
+  local new_name="$2"
 
-  zhm_cursors_pos=($CURSOR)
-  zhm_cursors_selection_left=($cursor_before_expand)
-  zhm_cursors_selection_right=($CURSOR)
-  zhm_cursors_last_moved_x=($CURSOR)
+  functions[$new_name]="
+    zle $prev_name
+    
+    zhm_cursors_pos=(\$CURSOR)
+    zhm_cursors_selection_left=(\$CURSOR)
+    zhm_cursors_selection_right=(\$CURSOR)
+    zhm_cursors_last_moved_x=(\$CURSOR)
 
-  __zhm_update_last_moved
-  __zhm_update_region_highlight
+    __zhm_update_last_moved
+    __zhm_update_region_highlight
+  "
+
+  zle -N $new_name
+}
+
+# Wrap existing widget with extra ZHM compatibility code
+# Like `zhm_wrap_widget` but also select the differences between cursor position
+function zhm_wrap_widget_with_selection {
+  local prev_name="$1"
+  local new_name="$2"
+
+  functions[$new_name]="
+    local cursors_before_changes=\$CURSOR
+
+    zle $prev_name
+
+    zhm_cursors_pos=(\$CURSOR)
+    if (( CURSOR > cursors_before_changes )); then
+      zhm_cursors_selection_left=(\$cursors_before_changes)
+      zhm_cursors_selection_right=(\$CURSOR)
+    else 
+      zhm_cursors_selection_left=(\$CURSOR)
+      zhm_cursors_selection_right=(\$cursors_before_changes)
+    fi
+    zhm_cursors_last_moved_x=(\$CURSOR)
+
+    __zhm_update_last_moved
+    __zhm_update_region_highlight
+  "
+
+  zle -N $new_name
 }
 
 function zhm_accept {
@@ -2777,7 +2812,7 @@ zle -N zhm_prompt_exit
 # Plugin specifics
 zle -N zhm_history_prev
 zle -N zhm_history_next
-zle -N zhm_expand_or_complete
+zhm_wrap_widget expand-or-complete zhm_expand_or_complete
 
 zle -N zhm_accept
 zle -N zhm_accept_or_insert_newline
