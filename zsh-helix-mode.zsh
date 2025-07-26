@@ -2813,6 +2813,7 @@ zle -N zhm_prompt_exit
 zle -N zhm_history_prev
 zle -N zhm_history_next
 zhm_wrap_widget expand-or-complete zhm_expand_or_complete
+zhm_wrap_widget bracketed-paste zhm_bracketed_paste
 
 zle -N zhm_accept
 zle -N zhm_accept_or_insert_newline
@@ -2948,6 +2949,8 @@ bindkey -M hxins "^[[C" zhm_clear_selection_move_right
 bindkey -M hxins "^[[D" zhm_clear_selection_move_left
 
 # Insert: Plugin specifics -----------------------------------------------------
+bindkey -M hxnor '^[[200~' zhm_bracketed_paste
+bindkey -M hxins '^[[200~' zhm_bracketed_paste
 bindkey -M hxnor '^N' zhm_history_next
 bindkey -M hxnor '^P' zhm_history_prev
 bindkey -M hxins '^[^M' zhm_multiline
