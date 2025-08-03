@@ -2543,11 +2543,24 @@ function zhm_accept {
   ZHM_ACCEPTING=1
 }
 
+function zhm_accept_then_insert_mode {
+  zhm_insert
+  zhm_accept
+}
+
 function zhm_accept_or_insert_newline {
   if (( ZHM_MULTILINE == 1 )); then
     zhm_insert_newline
   else
     zhm_accept
+  fi
+}
+
+function zhm_accept_then_insert_mode_or_insert_newline {
+  if (( ZHM_MULTILINE == 1 )); then
+    zhm_insert_newline
+  else
+    zhm_accept_then_insert_mode
   fi
 }
 
@@ -2817,6 +2830,8 @@ zhm_wrap_widget bracketed-paste zhm_bracketed_paste
 
 zle -N zhm_accept
 zle -N zhm_accept_or_insert_newline
+zle -N zhm_accept_then_insert_mode
+zle -N zhm_accept_then_insert_mode_or_insert_newline
 
 # Keybindings ==================================================================
 
