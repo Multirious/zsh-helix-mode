@@ -185,18 +185,17 @@ zhm-add-update-region-highlight-hook
 ```
 
 #### [fzf](https://github.com/junegunn/fzf)
-
-fzf keybinding should be done before sourcing this plugin:
-
-```
-source <(fzf --zsh)
-# source zsh-helix-mode
+Please add the following after you've sourced zsh-helix-mode and fzf shell integration (in any order):
+```zsh
+zhm_wrap_widget fzf-completion zhm_fzf_completion
+bindkey '^I' zhm_fzf_completion
 ```
 
 #### [fzf-tab](https://github.com/Aloxaf/fzf-tab)
 Please add the following after you've sourced zsh-helix-mode and fzf-tab (in any order):
 ```zsh
-bindkey '^I' fzf-tab-complete
+zhm_wrap_widget fzf-tab-complete zhm_fzf_tab_complete
+bindkey '^I' zhm_fzf_tab_complete
 ```
 
 # Plugin Specifics
