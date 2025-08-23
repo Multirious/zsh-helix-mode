@@ -2621,7 +2621,7 @@ function zhm_zle_line_pre_redraw {
   if (( ZHM_IN_PROMPT == 0 )); then
     if (( ZHM_HOOK_IKNOWWHATIMDOING == 0 )); then
       case "$ZHM_PREV_MODE $ZHM_MODE" in
-        "normal normal")
+        "normal normal" | "insert insert")
           for i in {1..$#zhm_cursors_pos}; do
             if (( CURSOR > ZHM_PREV_CURSOR )); then
               zhm_cursors_selection_right[$ZHM_PRIMARY_CURSOR_IDX]=$CURSOR
