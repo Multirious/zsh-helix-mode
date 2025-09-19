@@ -82,10 +82,42 @@ source ${zsh-helix-mode}/zsh-helix-mode.plugin.zsh
 ```
 
 ### [Nix](https://nixos.org/) ([flake](https://nix.dev/concepts/flakes.html))
+
+Add the input to your flake:
+
 ```nix
 {
   inputs = {
-    zsh-helix-mode.url = "github:multirious/zsh-helix-mode/main"
+    zsh-helix-mode.url = "github:multirious/zsh-helix-mode/main";
+    zsh-helix-mode.inputs.nixpkgs.follows = "nixpkgs";
+  };
+}
+```
+
+#### Source in ZSH config:
+
+```nix
+{
+  programs.zsh = {
+    interactiveShellInit = ''
+      source ${pkgs.}/share/zsh-helix-mode/zsh-helix-mode.plugin.zsh
+    '';
+  };
+}
+```
+
+#### Install using Home-Manager:
+
+```nix
+{
+  programs.zsh = {
+    plugins = [
+      {
+        name = "helix-mode";
+        src = pkgs.zsh-helix-mode;
+        file = "share/zsh-helix-mode/zsh-helix-mode.plugin.zsh";
+      }
+    ];
   };
 }
 ```
