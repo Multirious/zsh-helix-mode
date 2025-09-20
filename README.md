@@ -94,26 +94,26 @@ Add the input to your flake:
 }
 ```
 
-#### Source in ZSH config:
+#### Install using NixOS ZSH module
 
 ```nix
 {
   programs.zsh = {
     interactiveShellInit = ''
-      source ${pkgs.}/share/zsh-helix-mode/zsh-helix-mode.plugin.zsh
+      source ${pkgs.zsh-helix-mode}/share/zsh-helix-mode/zsh-helix-mode.plugin.zsh
     '';
   };
 }
 ```
 
-#### Install using Home-Manager:
+#### Install using Home-Manager module
 
 ```nix
 {
   programs.zsh = {
     plugins = [
       {
-        name = "helix-mode";
+        name = "zsh-helix-mode";
         src = pkgs.zsh-helix-mode;
         file = "share/zsh-helix-mode/zsh-helix-mode.plugin.zsh";
       }
