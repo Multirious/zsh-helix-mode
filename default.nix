@@ -1,8 +1,8 @@
-{ lib
-, stdenvNoCC
-}:
-stdenvNoCC.mkDerivation
 {
+  lib,
+  stdenvNoCC,
+}:
+stdenvNoCC.mkDerivation {
   pname = "zsh-helix-mode";
   version = "git";
 
