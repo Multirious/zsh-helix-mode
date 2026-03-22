@@ -1,5 +1,20 @@
-# zsh-helix-mode
+<h1>
+  <p align="center">
+    zsh-helix-mode
+  </p>
+</h1>
+
+<p align="center">
 Bring comfort of working with Helix keybindings to your Zsh environment.
+</p>
+
+<p align="center">
+<img
+  alt="zhm showcase"
+  src="https://github.com/user-attachments/assets/e51b6c24-139b-447e-a486-35e09c26937c" width="600"
+/>
+</p>
+
 
 This plugin attempts to implement Helix keybindings as accurate and complete
 as much as possible while respecting existing shell workflows.
