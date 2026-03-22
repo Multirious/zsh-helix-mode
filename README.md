@@ -69,7 +69,7 @@ plugins=(zsh-helix-mode)
 ### [Nix](https://nixos.org/) (non-flake)
 ```nix
 let
-  zsh-helix-mode = pkgs.fetchFromGithub {
+  zsh-helix-mode = pkgs.fetchFromGitHub {
     owner = "multirious";
     repo = "zsh-helix-mode";
     rev = "...";
