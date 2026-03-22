@@ -2414,17 +2414,17 @@ function zhm_delete_char_backward {
       BUFFER="${BUFFER:0:$((cursor - 1))}${BUFFER:$cursor}"
 
       zhm_cursors_pos[$i]=$((cursor - 1))
+      removed_count=$((removed_count + 1))
 
       if (( prev_cursor == zhm_cursors_selection_left[i] )); then
-        zhm_cursors_selection_left[$i]=$((zhm_cursors_selection_left[i] - 1))
-        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - 1))
+        zhm_cursors_selection_left[$i]=$((zhm_cursors_selection_left[i] - removed_count))
+        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - removed_count))
       else
-        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - 1))
+        zhm_cursors_selection_right[$i]=$((zhm_cursors_selection_right[i] - removed_count))
         if (( zhm_cursors_selection_right[i] < zhm_cursors_selection_left[i] )); then
           zhm_cursors_selection_left[$i]=$zhm_cursors_selection_right[$i]
         fi
       fi
-      removed_count=$((removed_count + 1))
     fi
   done
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
