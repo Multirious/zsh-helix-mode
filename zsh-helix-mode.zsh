@@ -2337,6 +2337,7 @@ function zhm_self_insert {
     zhm_cursors_last_moved_x[$i]=$((cursor + 1))
     inserted_count=$((inserted_count + 1))
   done
+  ZHM_HOOK_IKNOWWHATIMDOING=1
   CURSOR=$zhm_cursors_pos[$ZHM_PRIMARY_CURSOR_IDX]
   __zhm_update_last_moved
   __zhm_update_region_highlight
